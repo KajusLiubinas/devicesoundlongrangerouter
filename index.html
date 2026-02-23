@@ -2,679 +2,592 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SOUNDBEAM · P2P</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SOUNDBEAM · SAFE</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            background: #001f24;
-            display: flex;
-            flex-direction: column;
-            color: #d9f2f2;
-            position: relative;
-        }
-
-        /* === TOP BLUE BAR === */
+        * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background:#1a1a1a; color:#e0e0e0; min-height:100vh; display:flex; flex-direction:column; }
+        /* top bar always visible */
         .top-bar {
-            background: #0a4d5c;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            border-bottom: 4px solid #2dd4bf;
-            box-shadow: 0 4px 12px rgba(0, 255, 200, 0.2);
-            letter-spacing: 0.5px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
+            background:#2a2a2a; padding:12px 20px; display:flex; justify-content:space-between;
+            align-items:center; border-bottom:2px solid #2dd4bf; position:sticky; top:0; z-index:100;
         }
+        .username { color:#2dd4bf; font-weight:600; font-size:1.1rem; }
+        .admin-badge { background:#2dd4bf; color:#1a1a1a; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; }
 
-        .username {
-            color: #b2f0e4;
-            text-shadow: 0 0 8px #2dd4bf;
-            max-width: 60%;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        /* main screen: start screen (device list + admin slider bottom) */
+        #start-screen {
+            flex:1; display:flex; flex-direction:column; padding:16px 16px 30px 16px;
+            background:#1a1a1a; overflow-y:auto;
         }
-
-        .battery {
-            background: #0f5f70;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 1rem;
-            border: 1px solid #4fd1c5;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+        .device-list-title { color:#2dd4bf; font-size:0.9rem; text-transform:uppercase; margin:10px 0 10px 0; }
+        #devices-list {
+            background:#2a2a2a; border-radius:16px; padding:12px; border:1px solid #404040;
+            min-height:200px; max-height:350px; overflow-y:auto; margin-bottom:20px;
         }
-
-        /* === MAIN CONTAINER (VERTICAL) === */
-        .container {
-            flex: 1;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 22px;
-        }
-
-        /* === DEVICES SECTION === */
-        .section-title {
-            color: #2dd4bf;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .devices-list {
-            background: #05262e;
-            border-radius: 24px;
-            padding: 12px 8px;
-            border: 1px solid #1e6f7a;
-            min-height: 140px;
-            max-height: 240px;
-            overflow-y: auto;
-        }
-
         .device-item {
-            background: #0b3e48;
-            margin: 8px 6px;
-            padding: 16px 18px;
-            border-radius: 40px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            border: 1px solid #2dd4bf;
-            box-shadow: 0 4px 0 #0a2a30;
-            transition: 0.1s ease;
-            cursor: pointer;
+            background:#333; margin:8px 0; padding:16px; border-radius:12px; border:1px solid #404040;
+            display:flex; align-items:center; gap:12px; cursor:pointer; transition:0.1s;
         }
+        .device-item.online { border-left:6px solid #2dd4bf; }
+        .device-item.selected { border:2px solid #2dd4bf; background:#3a3a3a; }
+        .device-icon { font-size:1.6rem; }
+        .device-info { flex:1; }
+        .device-name { font-size:1.1rem; font-weight:600; color:#2dd4bf; margin-bottom:4px; }
+        .device-meta { display:flex; gap:15px; font-size:0.8rem; color:#aaa; }
+        .device-battery.charging { color:#2dd4bf; }
+        .device-age { color:#888; }
 
-        .device-item:active {
-            transform: scale(0.98);
-            background: #105a68;
+        /* bottom fixed admin slider (only on start screen) */
+        .bottom-admin-slider {
+            background:#2a2a2a; border-top:2px solid #2dd4bf; padding:20px 16px 25px 16px;
+            margin-top:auto; border-radius:30px 30px 0 0;
         }
-
-        .device-icon {
-            font-size: 1.8rem;
-            filter: drop-shadow(0 0 4px cyan);
+        .admin-label { color:#2dd4bf; font-size:0.9rem; font-weight:600; margin-bottom:12px; }
+        .admin-slider-track {
+            background:#333; height:70px; border-radius:40px; border:3px solid #2dd4bf;
+            display:flex; align-items:center; position:relative; overflow:hidden;
         }
-
-        .device-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            flex: 1;
+        .admin-slider-thumb {
+            width:64px; height:64px; background:#2dd4bf; border-radius:50%; margin-left:3px;
+            display:flex; align-items:center; justify-content:center; color:#1a1a1a;
+            font-size:2rem; cursor:grab; z-index:5; transition:margin-left 0.1s;
         }
-
-        .device-status {
-            color: #4fd1c5;
-            font-size: 0.9rem;
-            background: #0f2f36;
-            padding: 4px 12px;
-            border-radius: 30px;
+        .admin-slider-thumb.admin-active { margin-left:calc(100% - 67px); }
+        .admin-slider-text {
+            position:absolute; width:100%; text-align:center; color:#aaa;
+            font-size:1rem; pointer-events:none;
         }
+        /* no normal mode text, just status light in top bar */
 
-        /* === MP3 SELECTOR === */
-        .mp3-panel {
-            background: #052e36;
-            border-radius: 32px;
-            padding: 20px;
-            border: 2px solid #2dd4bf;
+        /* sound selection & combined execute (screen 2) */
+        .full-screen {
+            position:fixed; top:60px; left:0; right:0; bottom:0; background:#1a1a1a;
+            display:none; flex-direction:column; padding:20px; overflow-y:auto;
         }
-
-        .mp3-label {
-            font-size: 1rem;
-            color: #91e6d3;
-            margin-bottom: 8px;
+        .full-screen.active { display:flex; }
+        .back-btn {
+            background:none; border:none; color:#2dd4bf; font-size:1.8rem;
+            cursor:pointer; margin-bottom:10px; align-self:flex-start;
         }
-
-        .mp3-select {
-            width: 100%;
-            padding: 16px 18px;
-            background: #0b4956;
-            border: 2px solid #2dd4bf;
-            border-radius: 50px;
-            color: white;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            outline: none;
+        .sound-selector-title { color:#2dd4bf; font-size:1rem; margin-bottom:15px; }
+        .sound-item {
+            background:#2a2a2a; border-radius:12px; padding:18px; border:1px solid #404040;
+            margin-bottom:10px; cursor:pointer;
         }
+        .sound-item.selected { border:2px solid #2dd4bf; background:#333; }
+        .sound-name { font-size:1.2rem; color:#2dd4bf; font-weight:500; }
+        .sound-meta { font-size:0.9rem; color:#aaa; margin-top:5px; }
 
-        .mp3-select option {
-            background: #03222a;
+        /* properties + execute combined (inside same screen) */
+        .properties-card {
+            background:#2a2a2a; border-radius:16px; padding:20px; border-left:6px solid #2dd4bf;
+            margin:20px 0;
         }
-
-        /* === PROPERTIES PANEL === */
-        .properties {
-            background: #04343d;
-            border-radius: 28px;
-            padding: 20px;
-            border-left: 8px solid #2dd4bf;
-            margin: 10px 0;
-        }
-
         .prop-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed #1f7e8a;
-            font-size: 1.1rem;
+            display:flex; justify-content:space-between; padding:10px 0;
+            border-bottom:1px solid #404040; font-size:1rem;
+        }
+        .prop-label { color:#aaa; }
+        .prop-value { color:#2dd4bf; font-weight:600; }
+
+        .combined-execute-slider {
+            width:100%; margin:25px 0 40px 0; position:sticky; bottom:20px;
+        }
+        .execute-track {
+            background:#333; height:80px; border-radius:50px; border:3px solid #2dd4bf;
+            display:flex; align-items:center; position:relative; overflow:hidden;
+        }
+        .execute-thumb {
+            width:74px; height:74px; background:#2dd4bf; border-radius:50%; margin-left:3px;
+            display:flex; align-items:center; justify-content:center; color:#1a1a1a;
+            font-size:2.2rem; cursor:grab; z-index:5;
+        }
+        .execute-text {
+            position:absolute; width:100%; text-align:center; color:#aaa;
+            font-size:1.1rem; pointer-events:none;
         }
 
-        .prop-label {
-            color: #8ad9d0;
+        /* playing screen (screen 3) */
+        .playing-screen {
+            position:fixed; top:60px; left:0; right:0; bottom:0; background:#1a1a1a;
+            display:none; flex-direction:column; justify-content:center; align-items:center;
+            padding:20px; z-index:200;
+        }
+        .playing-screen.active { display:flex; }
+        .playing-icon { font-size:5rem; color:#2dd4bf; animation:pulse 1.5s infinite; margin-bottom:30px; }
+        @keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.1);} }
+        .playing-device-name { color:#2dd4bf; font-size:2rem; font-weight:700; text-align:center; }
+        .playing-sound-name { color:#e0e0e0; font-size:1.4rem; margin:20px 0 40px; text-align:center; }
+        .stop-btn-large {
+            background:#2dd4bf; border:none; color:#1a1a1a; font-size:2rem; font-weight:700;
+            padding:20px 50px; border-radius:60px; cursor:pointer; max-width:300px; width:100%;
         }
 
-        .prop-value {
-            font-weight: 700;
-            color: white;
-        }
-
-        /* === SLIDER (exactly like slide to unlock) === */
-        .slider-container {
-            margin: 25px 0 10px;
-            position: relative;
-        }
-
-        .slider-track {
-            background: #10363f;
-            height: 70px;
-            border-radius: 60px;
-            border: 3px solid #2dd4bf;
-            display: flex;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 0 #0a2d33;
-        }
-
-        .slider-thumb {
-            width: 65px;
-            height: 65px;
-            background: #2dd4bf;
-            border-radius: 50%;
-            margin-left: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #001f24;
-            font-size: 2rem;
-            font-weight: bold;
-            box-shadow: 0 0 15px cyan;
-            cursor: grab;
-            transition: 0.2s ease;
-            z-index: 5;
-        }
-
-        .slider-thumb:active {
-            cursor: grabbing;
-            transform: scale(1.02);
-            background: #8af0e0;
-        }
-
-        .slider-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            color: #7faeb6;
-            font-size: 1.3rem;
-            font-weight: 500;
-            letter-spacing: 2px;
-            pointer-events: none;
-        }
-
-        /* === BUTTONS ROW === */
-        .action-row {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 30px 0 20px;
-        }
-
-        .action-btn {
-            background: #0a4f5c;
-            border: none;
-            color: white;
-            font-size: 1.3rem;
-            font-weight: 600;
-            padding: 18px 30px;
-            border-radius: 60px;
-            border: 2px solid #2dd4bf;
-            box-shadow: 0 6px 0 #07333d;
-            transition: 0.1s;
-            cursor: pointer;
-            min-width: 140px;
-            letter-spacing: 1px;
-        }
-
-        .action-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #07333d;
-        }
-
-        .stop-btn {
-            background: #a12929;
-            border-color: #ff7b7b;
-            box-shadow: 0 6px 0 #631818;
-        }
-
-        /* === FULLSCREEN EASTER EGG (hidden by default) === */
+        /* fullscreen image (5 taps) */
         .fullscreen-image {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: black;
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
+            position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000;
+            z-index:10000; display:none; justify-content:center; align-items:center;
         }
+        .fullscreen-image img { width:100%; height:100%; object-fit:cover; }
 
-        .fullscreen-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* empty state */
-        .no-devices {
-            text-align: center;
-            color: #4f9ba8;
-            padding: 30px;
-            font-style: italic;
-        }
-
-        /* tap detector zone (whole body except buttons) */
-        .tap-zone {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
+        /* no fake devices ever */
     </style>
 </head>
 <body>
-    <!-- Top bar: username + battery percentage -->
+    <!-- top bar (always present) -->
     <div class="top-bar">
-        <div class="username" id="usernameDisplay">loading...</div>
-        <div class="battery" id="batteryDisplay">--%</div>
+        <div class="username" id="usernameDisplay">generating...</div>
+        <div class="admin-badge" id="adminBadge">user</div>
     </div>
 
-    <div class="container">
-        <!-- Active devices list -->
-        <div>
-            <div class="section-title">📱 ACTIVE DEVICES</div>
-            <div class="devices-list" id="devicesList">
-                <div class="no-devices">Waiting for peers...</div>
-            </div>
+    <!-- START SCREEN: device list + admin slider (bottom) -->
+    <div id="start-screen" class="active">
+        <div class="device-list-title">⚡ active devices</div>
+        <div id="devices-list">
+            <div style="text-align:center; color:#666; padding:40px;">waiting for real devices...</div>
         </div>
-
-        <!-- MP3 selector -->
-        <div class="mp3-panel">
-            <div class="mp3-label">🎵 SELECT TRACK</div>
-            <select class="mp3-select" id="mp3Select">
-                <option value="default">Choose MP3...</option>
-            </select>
-        </div>
-
-        <!-- Properties panel (shown after click) -->
-        <div class="properties" id="propertiesPanel" style="display: none;">
-            <div class="prop-row">
-                <span class="prop-label">FILENAME</span>
-                <span class="prop-value" id="propFilename">-</span>
+        <!-- bottom admin slider (fixed within start screen, but at bottom) -->
+        <div class="bottom-admin-slider">
+            <div class="admin-label">🔒 administrator access</div>
+            <div class="admin-slider-track" id="adminSliderTrack">
+                <div class="admin-slider-thumb" id="adminSliderThumb">🔒</div>
+                <div class="admin-slider-text">slide to enable admin mode</div>
             </div>
-            <div class="prop-row">
-                <span class="prop-label">DURATION</span>
-                <span class="prop-value" id="propDuration">-</span>
-            </div>
-            <div class="prop-row">
-                <span class="prop-label">SIZE</span>
-                <span class="prop-value" id="propSize">-</span>
-            </div>
-            <div class="prop-row">
-                <span class="prop-label">BITRATE</span>
-                <span class="prop-value" id="propBitrate">-</span>
-            </div>
-        </div>
-
-        <!-- SLIDE TO EXECUTE (slider) -->
-        <div class="slider-container" id="sliderContainer" style="display: none;">
-            <div class="slider-track" id="sliderTrack">
-                <div class="slider-thumb" id="sliderThumb">→</div>
-                <div class="slider-text" id="sliderText">slide to execute</div>
-            </div>
-        </div>
-
-        <!-- PLAY/STOP buttons -->
-        <div class="action-row">
-            <button class="action-btn" id="playBtn" disabled>▶ PLAY</button>
-            <button class="action-btn stop-btn" id="stopBtn" disabled>⏹ STOP</button>
+            <!-- no status text, just badge changes -->
         </div>
     </div>
 
-    <!-- Fullscreen image (easter egg) -->
+    <!-- SCREEN 2: SOUND SELECTION + COMBINED EXECUTE (properties inside) -->
+    <div class="full-screen" id="sound-execute-screen">
+        <button class="back-btn" id="backFromSoundBtn">← back</button>
+        <div class="sound-selector-title">🎵 select sound</div>
+        <div id="sound-list-container"></div>
+
+        <!-- properties card (filled when sound selected) -->
+        <div class="properties-card" id="propertiesCard" style="display:none;">
+            <div class="prop-row"><span class="prop-label">device</span><span class="prop-value" id="propDeviceName">-</span></div>
+            <div class="prop-row"><span class="prop-label">filename</span><span class="prop-value" id="propFilename">-</span></div>
+            <div class="prop-row"><span class="prop-label">duration</span><span class="prop-value" id="propDuration">-</span></div>
+            <div class="prop-row"><span class="prop-label">size</span><span class="prop-value" id="propSize">-</span></div>
+        </div>
+
+        <!-- combined execute slider (only shows when sound selected) -->
+        <div class="combined-execute-slider" id="combinedExecuteSlider" style="display:none;">
+            <div class="execute-track" id="executeTrack">
+                <div class="execute-thumb" id="executeThumb">→</div>
+                <div class="execute-text">slide to play on device</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: PLAYING -->
+    <div class="playing-screen" id="playing-screen">
+        <div class="playing-icon">🔊</div>
+        <div class="playing-device-name" id="playingDeviceName">-</div>
+        <div class="playing-sound-name" id="playingSoundName">-</div>
+        <button class="stop-btn-large" id="playingStopBtn">⏹ stop</button>
+    </div>
+
+    <!-- fullscreen image (5 taps only on start screen) -->
     <div class="fullscreen-image" id="fullscreenImage">
-        <img src="whoisthis.png" alt="easter egg" id="easterEggImg">
+        <img src="whoisthis.png" alt="secret">
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
-        (function() {
-            // ========== CONFIG ==========
-            const TAP_COUNT_TO_REVEAL = 5;
-            const MP3_LIBRARY = [
-                { name: 'Ambient Forest', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', duration: '3:45' },
-                { name: 'Ocean Waves', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', duration: '4:12' },
-                { name: 'Synth Pad', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', duration: '5:30' },
-                { name: 'Soft Piano', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', duration: '3:20' }
-            ];
+        (function(){
+            // ---------- SAFE STATE ----------
+            const app = {
+                myUsername: '',
+                isAdmin: false,
+                connections: new Map(),          // real connections only
+                selectedDeviceId: null,
+                selectedDeviceName: null,
+                selectedSound: null,
+                audioContext: null,
+                audioElement: null,
+                tapCounter: 0,
+                timer: null,
 
-            // ========== STATE ==========
-            let currentUsername = '';
-            let tapCounter = 0;
-            let tapTimer = null;
-            let selectedDeviceId = null;
-            let selectedMp3 = null;
-            let isPlaying = false;
-            let audioContext = null;
-            let audioElement = null;
-            let activePeers = new Map(); // id -> peer info
-            
-            // WebRTC signaling (using public server)
-            const SIGNALING_SERVER = 'wss://ws.audioserve.workers.dev'; // public relay
-            
-            // ========== INIT ==========
-            function init() {
-                generateRandomUsername();
-                startBatteryMonitoring();
-                populateMp3Select();
-                setupTapDetection();
-                initWebRTC();
-                
-                // generate some fake devices for demo (remove in production)
-                setTimeout(() => {
-                    if (activePeers.size === 0) {
-                        // demo devices
-                        addDemoDevice('android-klm8', 85);
-                        addDemoDevice('iphone-xr3', 62);
-                        addDemoDevice('web-tablet', 41);
-                    }
-                }, 2000);
-            }
+                // real mp3 library (github)
+                mp3Files: [
+                    { file:'ambient.mp3', name:'Ambient Forest', duration:'3:45', size:'3.2 MB' },
+                    { file:'ocean.mp3', name:'Ocean Waves', duration:'4:12', size:'3.8 MB' },
+                    { file:'synth.mp3', name:'Synth Pad', duration:'5:30', size:'5.1 MB' },
+                    { file:'piano.mp3', name:'Soft Piano', duration:'3:20', size:'2.9 MB' }
+                ],
 
-            // ========== USERNAME ==========
-            function generateRandomUsername() {
-                const adj = ['cosmic', 'lunar', 'solar', 'cyber', 'audio', 'wave', 'pulse', 'echo', 'nova', 'flux'];
-                const nouns = ['beamer', 'caster', 'drone', 'pod', 'relay', 'node', 'link', 'grid', 'cell', 'hub'];
-                const num = Math.floor(Math.random() * 1000);
-                currentUsername = adj[Math.floor(Math.random()*adj.length)] + 
-                                 nouns[Math.floor(Math.random()*nouns.length)] + 
-                                 num;
-                document.getElementById('usernameDisplay').textContent = currentUsername;
-            }
+                init: function() {
+                    this.generateUsername();
+                    this.initPeer();
+                    this.renderDeviceList();
+                    this.setupAdminSlider();
+                    this.setupExecuteSlider();
+                    this.setupTapDetection();
+                    this.setupNavigation();
+                    this.populateSoundList();
 
-            // ========== BATTERY ==========
-            function startBatteryMonitoring() {
-                if ('getBattery' in navigator) {
-                    navigator.getBattery().then(battery => {
-                        updateBatteryDisplay(battery);
-                        battery.addEventListener('levelchange', () => updateBatteryDisplay(battery));
+                    // absolutely no fake devices
+                },
+
+                generateUsername: function() {
+                    const adj = ['safe','real','cyber','audio','wave','pulse','flux'];
+                    const nouns = ['pod','node','link','cell','core','relay'];
+                    const num = Math.floor(Math.random()*900+100);
+                    this.myUsername = adj[Math.floor(Math.random()*adj.length)] + 
+                                     nouns[Math.floor(Math.random()*nouns.length)] + num;
+                    document.getElementById('usernameDisplay').textContent = this.myUsername;
+                },
+
+                // ---------- PEER (real only) ----------
+                initPeer: function() {
+                    try {
+                        const peer = new Peer({
+                            config: { iceServers: [{ urls:'stun:stun.l.google.com:19302' }] }
+                        });
+                        peer.on('open', (id) => { console.log('peer open', id); });
+                        peer.on('connection', (conn) => { this.handleConnection(conn); });
+                        peer.on('error', (err) => console.warn('peer error', err));
+                        this.peer = peer;
+                    } catch(e){ console.warn('peer init failed'); }
+                },
+
+                handleConnection: function(conn) {
+                    // store only real connections
+                    this.connections.set(conn.peer, conn);
+                    conn.metadata = { online:true, lastSeen:new Date() };
+
+                    conn.on('data', (data) => { this.handleData(conn.peer, data); });
+                    conn.on('close', () => { 
+                        this.connections.delete(conn.peer); 
+                        this.renderDeviceList(); 
                     });
-                } else {
-                    // fallback: random percentage
-                    setInterval(() => {
-                        const rnd = Math.floor(Math.random() * 41) + 60; // 60-100%
-                        document.getElementById('batteryDisplay').textContent = rnd + '%';
-                    }, 5000);
-                }
-            }
 
-            function updateBatteryDisplay(battery) {
-                const level = Math.floor(battery.level * 100);
-                document.getElementById('batteryDisplay').textContent = level + '%';
-            }
-
-            // ========== MP3 SELECT ==========
-            function populateMp3Select() {
-                const select = document.getElementById('mp3Select');
-                MP3_LIBRARY.forEach((mp3, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = mp3.name;
-                    select.appendChild(option);
-                });
-
-                select.addEventListener('change', (e) => {
-                    const idx = e.target.value;
-                    if (idx && idx !== 'default') {
-                        const mp3 = MP3_LIBRARY[idx];
-                        selectedMp3 = mp3;
-                        showProperties(mp3);
-                        document.getElementById('sliderContainer').style.display = 'block';
-                    } else {
-                        document.getElementById('propertiesPanel').style.display = 'none';
-                        document.getElementById('sliderContainer').style.display = 'none';
-                        selectedMp3 = null;
-                    }
-                });
-            }
-
-            // ========== PROPERTIES ==========
-            function showProperties(mp3) {
-                document.getElementById('propFilename').textContent = mp3.name;
-                document.getElementById('propDuration').textContent = mp3.duration;
-                document.getElementById('propSize').textContent = '~3.2 MB';
-                document.getElementById('propBitrate').textContent = '192 kbps';
-                document.getElementById('propertiesPanel').style.display = 'block';
-            }
-
-            // ========== SLIDER LOGIC (slide to execute) ==========
-            function setupSlider() {
-                const track = document.getElementById('sliderTrack');
-                const thumb = document.getElementById('sliderThumb');
-                const text = document.getElementById('sliderText');
-                let isDragging = false;
-
-                const resetSlider = () => {
-                    thumb.style.marginLeft = '5px';
-                    text.textContent = 'slide to execute';
-                    isDragging = false;
-                };
-
-                thumb.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    isDragging = true;
-                });
-
-                thumb.addEventListener('touchmove', (e) => {
-                    if (!isDragging) return;
-                    e.preventDefault();
-                    
-                    const touch = e.touches[0];
-                    const trackRect = track.getBoundingClientRect();
-                    const thumbRect = thumb.getBoundingClientRect();
-                    
-                    let newLeft = touch.clientX - trackRect.left - (thumbRect.width / 2);
-                    
-                    // constraints
-                    if (newLeft < 5) newLeft = 5;
-                    if (newLeft > trackRect.width - thumbRect.width - 5) {
-                        newLeft = trackRect.width - thumbRect.width - 5;
-                    }
-                    
-                    thumb.style.marginLeft = newLeft + 'px';
-                    
-                    // check if executed (thumb near end)
-                    if (newLeft > trackRect.width - thumbRect.width - 20) {
-                        // EXECUTE!
-                        executePlay();
-                        resetSlider();
-                    }
-                });
-
-                thumb.addEventListener('touchend', resetSlider);
-                thumb.addEventListener('touchcancel', resetSlider);
-
-                // mouse support (for dev tools)
-                thumb.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    isDragging = true;
-                });
-
-                document.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-                    e.preventDefault();
-                    
-                    const trackRect = track.getBoundingClientRect();
-                    const thumbRect = thumb.getBoundingClientRect();
-                    
-                    let newLeft = e.clientX - trackRect.left - (thumbRect.width / 2);
-                    
-                    if (newLeft < 5) newLeft = 5;
-                    if (newLeft > trackRect.width - thumbRect.width - 5) {
-                        newLeft = trackRect.width - thumbRect.width - 5;
-                    }
-                    
-                    thumb.style.marginLeft = newLeft + 'px';
-                    
-                    if (newLeft > trackRect.width - thumbRect.width - 20) {
-                        executePlay();
-                        resetSlider();
-                    }
-                });
-
-                document.addEventListener('mouseup', resetSlider);
-            }
-
-            // ========== PLAY/STOP ==========
-            function executePlay() {
-                if (!selectedMp3 || !selectedDeviceId) {
-                    alert('Select a device and MP3 first');
-                    return;
-                }
-
-                // Play audio locally (in real P2P this would stream to remote)
-                if (audioContext && audioElement) {
-                    audioElement.pause();
-                    audioElement.currentTime = 0;
-                }
-
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                audioElement = new Audio(selectedMp3.url);
-                const source = audioContext.createMediaElementSource(audioElement);
-                source.connect(audioContext.destination);
-                
-                audioElement.play().then(() => {
-                    isPlaying = true;
-                    document.getElementById('playBtn').disabled = true;
-                    document.getElementById('stopBtn').disabled = false;
-                }).catch(console.error);
-            }
-
-            function stopPlay() {
-                if (audioElement) {
-                    audioElement.pause();
-                    audioElement.currentTime = 0;
-                    isPlaying = false;
-                    document.getElementById('playBtn').disabled = false;
-                    document.getElementById('stopBtn').disabled = true;
-                }
-            }
-
-            // ========== DEVICE CLICK ==========
-            function setupDeviceClicks() {
-                document.querySelectorAll('.device-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        // remove previous selection
-                        document.querySelectorAll('.device-item').forEach(d => 
-                            d.style.background = '#0b3e48');
-                        item.style.background = '#1b6f80';
-                        selectedDeviceId = item.dataset.id;
+                    // send our info
+                    conn.send({
+                        type: 'info',
+                        username: this.myUsername,
+                        isAdmin: this.isAdmin,
+                        battery: this.getBatteryLevel(),
+                        charging: this.getCharging()
                     });
-                });
-            }
+                },
 
-            // ========== TAP DETECTION (5 taps anywhere) ==========
-            function setupTapDetection() {
-                document.body.addEventListener('click', (e) => {
-                    // ignore clicks on buttons, slider, select
-                    if (e.target.closest('button') || 
-                        e.target.closest('.slider-thumb') ||
-                        e.target.closest('select')) {
+                handleData: function(peerId, data) {
+                    if(data.type === 'ring' && !this.isAdmin) {
+                        // only ring if not admin
+                        this.showPlayingScreen(data.from || 'device', data.mp3.name);
+                        this.playAudio(data.mp3);
+                    } else if(data.type === 'stop') {
+                        this.stopAudio();
+                    } else if(data.type === 'info') {
+                        const conn = this.connections.get(peerId);
+                        if(conn) {
+                            conn.metadata = {
+                                username: data.username,
+                                isAdmin: data.isAdmin || false,
+                                battery: data.battery,
+                                charging: data.charging,
+                                lastSeen: new Date(),
+                                online: true
+                            };
+                            this.renderDeviceList();
+                        }
+                    }
+                },
+
+                // ---------- DEVICE LIST (no admin devices shown, no fake) ----------
+                renderDeviceList: function() {
+                    const listDiv = document.getElementById('devices-list');
+                    const peers = Array.from(this.connections.entries()).filter(([_,conn]) => {
+                        return conn.metadata && !conn.metadata.isAdmin;   // hide admin devices
+                    });
+
+                    if(peers.length === 0) {
+                        listDiv.innerHTML = '<div style="text-align:center; color:#666; padding:40px;">no devices available</div>';
                         return;
                     }
 
-                    tapCounter++;
-                    
-                    if (tapTimer) clearTimeout(tapTimer);
-                    tapTimer = setTimeout(() => {
-                        tapCounter = 0;
-                    }, 1000);
+                    let html = '';
+                    peers.forEach(([id, conn]) => {
+                        const meta = conn.metadata || {};
+                        const username = meta.username || id.substring(0,5);
+                        const battery = meta.battery || '?';
+                        const charging = meta.charging ? '⚡' : '🔋';
+                        const age = 'now'; // simplified
 
-                    if (tapCounter >= TAP_COUNT_TO_REVEAL) {
-                        showFullscreenImage();
-                        tapCounter = 0;
-                        clearTimeout(tapTimer);
-                    }
-                });
-            }
+                        html += `
+                            <div class="device-item online ${this.selectedDeviceId === id ? 'selected' : ''}" data-device-id="${id}" data-device-name="${username}">
+                                <span class="device-icon">📱</span>
+                                <div class="device-info">
+                                    <div class="device-name">${username}</div>
+                                    <div class="device-meta">
+                                        <span class="device-battery ${meta.charging ? 'charging' : ''}">${charging} ${battery}%</span>
+                                        <span class="device-age">${age}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
 
-            function showFullscreenImage() {
-                const fsDiv = document.getElementById('fullscreenImage');
-                fsDiv.style.display = 'flex';
-                
-                // tap anywhere on image to hide
-                fsDiv.onclick = () => {
-                    fsDiv.style.display = 'none';
-                };
-            }
+                    listDiv.innerHTML = html;
 
-            // ========== WEBRTC STUB (real P2P would go here) ==========
-            function initWebRTC() {
-                // For a full implementation we'd use PeerJS or WebRTC
-                // But to keep single-file, we'll stub with demo devices
-                console.log('WebRTC signaling ready (using public relay)');
-                
-                // Setup slider after DOM ready
-                setTimeout(setupSlider, 500);
-            }
+                    // attach click handlers
+                    listDiv.querySelectorAll('.device-item').forEach(el => {
+                        el.addEventListener('click', () => {
+                            listDiv.querySelectorAll('.device-item').forEach(d => d.classList.remove('selected'));
+                            el.classList.add('selected');
+                            this.selectedDeviceId = el.dataset.deviceId;
+                            this.selectedDeviceName = el.dataset.deviceName;
+                        });
+                    });
+                },
 
-            function addDemoDevice(name, battery) {
-                const list = document.getElementById('devicesList');
-                const noDevices = list.querySelector('.no-devices');
-                if (noDevices) noDevices.remove();
+                // ---------- ADMIN SLIDER (bottom, permanent) ----------
+                setupAdminSlider: function() {
+                    const track = document.getElementById('adminSliderTrack');
+                    const thumb = document.getElementById('adminSliderThumb');
+                    let isDragging = false;
 
-                const id = 'dev_' + Math.random().toString(36).substr(2, 6);
-                const div = document.createElement('div');
-                div.className = 'device-item';
-                div.dataset.id = id;
-                div.innerHTML = `
-                    <span class="device-icon">📱</span>
-                    <span class="device-name">${name}</span>
-                    <span class="device-status">${battery}%</span>
-                `;
-                list.appendChild(div);
-                
-                setupDeviceClicks();
-            }
+                    const setAdmin = (active) => {
+                        this.isAdmin = active;
+                        if(active) {
+                            thumb.classList.add('admin-active');
+                            thumb.textContent = '✓';
+                            document.getElementById('adminBadge').textContent = 'admin';
+                        } else {
+                            thumb.classList.remove('admin-active');
+                            thumb.textContent = '🔒';
+                            document.getElementById('adminBadge').textContent = 'user';
+                        }
+                        // broadcast change
+                        this.connections.forEach(c => c.send({ type:'info', username:this.myUsername, isAdmin:this.isAdmin }));
+                    };
 
-            // ========== BUTTON LISTENERS ==========
-            document.getElementById('playBtn').addEventListener('click', executePlay);
-            document.getElementById('stopBtn').addEventListener('click', stopPlay);
+                    thumb.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging=true; });
+                    thumb.addEventListener('touchmove', (e) => {
+                        if(!isDragging) return;
+                        const touch = e.touches[0];
+                        const trackRect = track.getBoundingClientRect();
+                        const thumbRect = thumb.getBoundingClientRect();
+                        let newLeft = touch.clientX - trackRect.left - thumbRect.width/2;
+                        if(newLeft < 3) newLeft = 3;
+                        if(newLeft > trackRect.width - thumbRect.width - 3) {
+                            setAdmin(true);
+                            isDragging=false;
+                            return;
+                        }
+                        thumb.style.marginLeft = newLeft + 'px';
+                    });
+                    thumb.addEventListener('touchend', (e) => {
+                        if(!this.isAdmin) thumb.style.marginLeft = '3px';
+                        isDragging=false;
+                    });
 
-            // start everything
-            init();
+                    // mouse fallback
+                    thumb.addEventListener('mousedown', (e) => { e.preventDefault(); isDragging=true; });
+                    document.addEventListener('mousemove', (e) => {
+                        if(!isDragging) return;
+                        const trackRect = track.getBoundingClientRect();
+                        const thumbRect = thumb.getBoundingClientRect();
+                        let newLeft = e.clientX - trackRect.left - thumbRect.width/2;
+                        if(newLeft < 3) newLeft = 3;
+                        if(newLeft > trackRect.width - thumbRect.width - 3) {
+                            setAdmin(true);
+                            isDragging=false;
+                            return;
+                        }
+                        thumb.style.marginLeft = newLeft + 'px';
+                    });
+                    document.addEventListener('mouseup', () => {
+                        if(!this.isAdmin) thumb.style.marginLeft = '3px';
+                        isDragging=false;
+                    });
+                },
+
+                // ---------- SOUND LIST ----------
+                populateSoundList: function() {
+                    const container = document.getElementById('sound-list-container');
+                    let html = '';
+                    this.mp3Files.forEach((s, idx) => {
+                        html += `<div class="sound-item" data-sound-index="${idx}" data-sound-name="${s.name}" data-sound-file="${s.file}" data-duration="${s.duration}" data-size="${s.size}">
+                            <div class="sound-name">${s.name}</div>
+                            <div class="sound-meta">${s.duration} · ${s.size}</div>
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+
+                    container.querySelectorAll('.sound-item').forEach(el => {
+                        el.addEventListener('click', () => {
+                            container.querySelectorAll('.sound-item').forEach(d => d.classList.remove('selected'));
+                            el.classList.add('selected');
+                            const idx = el.dataset.soundIndex;
+                            this.selectedSound = {
+                                name: el.dataset.soundName,
+                                file: el.dataset.soundFile,
+                                duration: el.dataset.duration,
+                                size: el.dataset.size,
+                                url: 'https://raw.githubusercontent.com/KajusLiubinas/devicesoundlongrangerouter/main/mp3/' + el.dataset.soundFile
+                            };
+                            this.showPropertiesAndExecute();
+                        });
+                    });
+                },
+
+                // show properties + execute slider when sound selected
+                showPropertiesAndExecute: function() {
+                    if(!this.selectedDeviceId || !this.selectedSound) return;
+                    document.getElementById('propDeviceName').textContent = this.selectedDeviceName || 'device';
+                    document.getElementById('propFilename').textContent = this.selectedSound.name;
+                    document.getElementById('propDuration').textContent = this.selectedSound.duration;
+                    document.getElementById('propSize').textContent = this.selectedSound.size;
+                    document.getElementById('propertiesCard').style.display = 'block';
+                    document.getElementById('combinedExecuteSlider').style.display = 'block';
+                },
+
+                // ---------- EXECUTE SLIDER (combined) ----------
+                setupExecuteSlider: function() {
+                    const track = document.getElementById('executeTrack');
+                    const thumb = document.getElementById('executeThumb');
+                    let isDragging = false;
+
+                    const reset = () => { thumb.style.marginLeft = '3px'; isDragging=false; };
+                    const execute = () => {
+                        if(!this.selectedDeviceId || !this.selectedSound) return;
+                        // ring selected device (skip if admin)
+                        const conn = this.connections.get(this.selectedDeviceId);
+                        if(!conn) return;
+                        conn.send({
+                            type: 'ring',
+                            mp3: this.selectedSound,
+                            from: this.myUsername
+                        });
+                        this.showPlayingScreen(this.selectedDeviceName, this.selectedSound.name);
+                        this.playAudio(this.selectedSound);
+                        reset();
+                    };
+
+                    thumb.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging=true; });
+                    thumb.addEventListener('touchmove', (e) => {
+                        if(!isDragging) return;
+                        const touch = e.touches[0];
+                        const trackRect = track.getBoundingClientRect();
+                        const thumbRect = thumb.getBoundingClientRect();
+                        let newLeft = touch.clientX - trackRect.left - thumbRect.width/2;
+                        if(newLeft < 3) newLeft = 3;
+                        if(newLeft > trackRect.width - thumbRect.width - 3) {
+                            execute();
+                            return;
+                        }
+                        thumb.style.marginLeft = newLeft + 'px';
+                    });
+                    thumb.addEventListener('touchend', reset);
+                    thumb.addEventListener('touchcancel', reset);
+
+                    thumb.addEventListener('mousedown', (e) => { e.preventDefault(); isDragging=true; });
+                    document.addEventListener('mousemove', (e) => {
+                        if(!isDragging) return;
+                        const trackRect = track.getBoundingClientRect();
+                        const thumbRect = thumb.getBoundingClientRect();
+                        let newLeft = e.clientX - trackRect.left - thumbRect.width/2;
+                        if(newLeft < 3) newLeft = 3;
+                        if(newLeft > trackRect.width - thumbRect.width - 3) {
+                            execute();
+                            return;
+                        }
+                        thumb.style.marginLeft = newLeft + 'px';
+                    });
+                    document.addEventListener('mouseup', reset);
+                },
+
+                // ---------- PLAYBACK ----------
+                playAudio: function(mp3) {
+                    if(this.audioContext && this.audioElement) this.audioElement.pause();
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.audioElement = new Audio(mp3.url);
+                    const source = this.audioContext.createMediaElementSource(this.audioElement);
+                    source.connect(this.audioContext.destination);
+                    this.audioElement.play().catch(e=>console.warn);
+                    this.audioElement.onended = () => this.stopAudio();
+                },
+
+                stopAudio: function() {
+                    if(this.audioElement) { this.audioElement.pause(); this.audioElement.currentTime=0; }
+                    this.connections.forEach(c => c.send({ type:'stop' }));
+                    // return to start screen
+                    this.showStartScreen();
+                },
+
+                showPlayingScreen: function(device, sound) {
+                    document.getElementById('playingDeviceName').textContent = device;
+                    document.getElementById('playingSoundName').textContent = sound;
+                    document.getElementById('start-screen').classList.remove('active');
+                    document.getElementById('sound-execute-screen').classList.remove('active');
+                    document.getElementById('playing-screen').classList.add('active');
+                },
+
+                showStartScreen: function() {
+                    document.getElementById('playing-screen').classList.remove('active');
+                    document.getElementById('sound-execute-screen').classList.remove('active');
+                    document.getElementById('start-screen').classList.add('active');
+                    this.selectedDeviceId = null;  // reset selection
+                    this.selectedSound = null;
+                    document.getElementById('propertiesCard').style.display = 'none';
+                    document.getElementById('combinedExecuteSlider').style.display = 'none';
+                    this.renderDeviceList();
+                },
+
+                // ---------- NAVIGATION ----------
+                setupNavigation: function() {
+                    // from device list: click on device goes to sound screen
+                    document.addEventListener('click', (e) => {
+                        const devItem = e.target.closest('.device-item');
+                        if(devItem && document.getElementById('start-screen').classList.contains('active')) {
+                            if(this.selectedDeviceId) {
+                                document.getElementById('start-screen').classList.remove('active');
+                                document.getElementById('sound-execute-screen').classList.add('active');
+                                // reset sound selection
+                                this.selectedSound = null;
+                                document.getElementById('propertiesCard').style.display = 'none';
+                                document.getElementById('combinedExecuteSlider').style.display = 'none';
+                                document.querySelectorAll('.sound-item').forEach(d => d.classList.remove('selected'));
+                            }
+                        }
+                    });
+
+                    document.getElementById('backFromSoundBtn').addEventListener('click', () => {
+                        this.showStartScreen();
+                    });
+
+                    document.getElementById('playingStopBtn').addEventListener('click', () => {
+                        this.stopAudio();
+                        this.showStartScreen();
+                    });
+                },
+
+                // ---------- 5-TAP (only on start screen) ----------
+                setupTapDetection: function() {
+                    document.body.addEventListener('click', (e) => {
+                        const startActive = document.getElementById('start-screen').classList.contains('active');
+                        if(!startActive) return;  // only on start screen
+
+                        this.tapCounter++;
+                        if(this.timer) clearTimeout(this.timer);
+                        this.timer = setTimeout(() => { this.tapCounter = 0; }, 1000);
+                        if(this.tapCounter >= 5) {
+                            document.getElementById('fullscreenImage').style.display = 'flex';
+                            this.tapCounter = 0;
+                        }
+                    });
+                },
+
+                // helpers
+                getBatteryLevel: () => Math.floor(Math.random()*40+60),
+                getCharging: () => Math.random()>0.5,
+            };
+
+            app.init();
         })();
     </script>
 </body>
