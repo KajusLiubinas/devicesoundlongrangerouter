@@ -3,31 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SOUNDBEAM · SAFE</title>
+    <title>SOUNDBEAM · SAFE SEPARATION</title>
     <style>
+        /* ---------- RESET & SAFE LAYERS ---------- */
         * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        body { background:#1a1a1a; color:#e0e0e0; min-height:100vh; display:flex; flex-direction:column; }
-        /* top bar always visible */
-        .top-bar {
-            background:#2a2a2a; padding:12px 20px; display:flex; justify-content:space-between;
-            align-items:center; border-bottom:2px solid #2dd4bf; position:sticky; top:0; z-index:100;
-        }
-        .username { color:#2dd4bf; font-weight:600; font-size:1.1rem; }
-        .admin-badge { background:#2dd4bf; color:#1a1a1a; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; }
+        body { background:#1a1a1a; color:#e0e0e0; height:100vh; overflow:hidden; }
 
-        /* main screen: start screen (device list + admin slider bottom) */
-        #start-screen {
-            flex:1; display:flex; flex-direction:column; padding:16px 16px 30px 16px;
-            background:#1a1a1a; overflow-y:auto;
+        /* ----- TOP BAR (fully cyan background) ----- */
+        .top-bar {
+            position:fixed; top:0; left:0; right:0; height:60px;
+            background:#2dd4bf;  /* fully cyan */
+            padding:0 20px;
+            display:flex; justify-content:space-between; align-items:center;
+            border-bottom:2px solid #1a1a1a;
+            z-index:1000;
+            pointer-events:none; /* allow clicks through to screens */
         }
-        .device-list-title { color:#2dd4bf; font-size:0.9rem; text-transform:uppercase; margin:10px 0 10px 0; }
-        #devices-list {
+        .top-bar .username,
+        .top-bar .admin-badge {
+            pointer-events:auto;
+            color:#1a1a1a; font-weight:700; text-shadow:none;
+        }
+        .username { font-size:1.1rem; }
+        .admin-badge { background:#1a1a1a; color:#2dd4bf; padding:4px 12px; border-radius:20px; }
+
+        /* ----- SCREENS (mutually exclusive full layers) ----- */
+        .screen {
+            position:fixed; top:60px; left:0; right:0; bottom:0;
+            background:#1a1a1a;
+            overflow-y:auto;
+            display:none;   /* only active screen shows */
+            z-index:100;
+            padding:20px;
+            flex-direction:column;
+        }
+        .screen.active { display:flex !important; }
+
+        /* ---------- HOME SCREEN (device list + admin slider at bottom) ---------- */
+        .home-content { flex:1; display:flex; flex-direction:column; min-height:100%; }
+        .device-list-title { color:#2dd4bf; font-size:0.9rem; text-transform:uppercase; margin:0 0 15px 0; flex-shrink:0; }
+
+        #devices-list-container {
             background:#2a2a2a; border-radius:16px; padding:12px; border:1px solid #404040;
-            min-height:200px; max-height:350px; overflow-y:auto; margin-bottom:20px;
+            flex:1; overflow-y:auto; margin-bottom:20px;
         }
         .device-item {
-            background:#333; margin:8px 0; padding:16px; border-radius:12px; border:1px solid #404040;
-            display:flex; align-items:center; gap:12px; cursor:pointer; transition:0.1s;
+            background:#333; margin:8px 0; padding:16px; border-radius:12px;
+            border:1px solid #404040; display:flex; align-items:center; gap:12px;
+            cursor:pointer; transition:0.1s;
         }
         .device-item.online { border-left:6px solid #2dd4bf; }
         .device-item.selected { border:2px solid #2dd4bf; background:#3a3a3a; }
@@ -38,10 +61,10 @@
         .device-battery.charging { color:#2dd4bf; }
         .device-age { color:#888; }
 
-        /* bottom fixed admin slider (only on start screen) */
-        .bottom-admin-slider {
-            background:#2a2a2a; border-top:2px solid #2dd4bf; padding:20px 16px 25px 16px;
-            margin-top:auto; border-radius:30px 30px 0 0;
+        /* admin slider at bottom (fixed within home screen) */
+        .admin-slider-section {
+            flex-shrink:0; background:#2a2a2a; border-top:2px solid #2dd4bf;
+            padding:20px 0 0 0; margin-top:auto; border-radius:30px 30px 0 0;
         }
         .admin-label { color:#2dd4bf; font-size:0.9rem; font-weight:600; margin-bottom:12px; }
         .admin-slider-track {
@@ -53,36 +76,32 @@
             display:flex; align-items:center; justify-content:center; color:#1a1a1a;
             font-size:2rem; cursor:grab; z-index:5; transition:margin-left 0.1s;
         }
-        .admin-slider-thumb.admin-active { margin-left:calc(100% - 67px); }
+        .admin-slider-thumb.admin-active { margin-left:calc(100% - 67px); background:#2dd4bf; }
         .admin-slider-text {
             position:absolute; width:100%; text-align:center; color:#aaa;
             font-size:1rem; pointer-events:none;
         }
-        /* no normal mode text, just status light in top bar */
+        /* no status text – only badge changes */
 
-        /* sound selection & combined execute (screen 2) */
-        .full-screen {
-            position:fixed; top:60px; left:0; right:0; bottom:0; background:#1a1a1a;
-            display:none; flex-direction:column; padding:20px; overflow-y:auto;
-        }
-        .full-screen.active { display:flex; }
-        .back-btn {
+        /* ---------- SOUND + EXECUTE SCREEN (combined) ---------- */
+        #sound-screen .back-btn {
             background:none; border:none; color:#2dd4bf; font-size:1.8rem;
             cursor:pointer; margin-bottom:10px; align-self:flex-start;
         }
-        .sound-selector-title { color:#2dd4bf; font-size:1rem; margin-bottom:15px; }
+        .sound-selector-title { color:#2dd4bf; font-size:1rem; margin:10px 0 15px; }
+        #sound-list-container { margin-bottom:20px; }
         .sound-item {
             background:#2a2a2a; border-radius:12px; padding:18px; border:1px solid #404040;
             margin-bottom:10px; cursor:pointer;
         }
         .sound-item.selected { border:2px solid #2dd4bf; background:#333; }
-        .sound-name { font-size:1.2rem; color:#2dd4bf; font-weight:500; }
+        .sound-name { font-size:1.2rem; color:#2dd4bf; }
         .sound-meta { font-size:0.9rem; color:#aaa; margin-top:5px; }
 
-        /* properties + execute combined (inside same screen) */
+        /* properties card (appears after sound selected) */
         .properties-card {
             background:#2a2a2a; border-radius:16px; padding:20px; border-left:6px solid #2dd4bf;
-            margin:20px 0;
+            margin:10px 0 20px;
         }
         .prop-row {
             display:flex; justify-content:space-between; padding:10px 0;
@@ -91,8 +110,9 @@
         .prop-label { color:#aaa; }
         .prop-value { color:#2dd4bf; font-weight:600; }
 
+        /* execute slider (at bottom of sound screen) */
         .combined-execute-slider {
-            width:100%; margin:25px 0 40px 0; position:sticky; bottom:20px;
+            width:100%; margin-top:auto; padding-top:20px; position:sticky; bottom:10px;
         }
         .execute-track {
             background:#333; height:80px; border-radius:50px; border:3px solid #2dd4bf;
@@ -108,13 +128,10 @@
             font-size:1.1rem; pointer-events:none;
         }
 
-        /* playing screen (screen 3) */
-        .playing-screen {
-            position:fixed; top:60px; left:0; right:0; bottom:0; background:#1a1a1a;
-            display:none; flex-direction:column; justify-content:center; align-items:center;
-            padding:20px; z-index:200;
+        /* ---------- PLAYING SCREEN ---------- */
+        #playing-screen {
+            justify-content:center; align-items:center; padding:20px;
         }
-        .playing-screen.active { display:flex; }
         .playing-icon { font-size:5rem; color:#2dd4bf; animation:pulse 1.5s infinite; margin-bottom:30px; }
         @keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.1);} }
         .playing-device-name { color:#2dd4bf; font-size:2rem; font-weight:700; text-align:center; }
@@ -124,47 +141,51 @@
             padding:20px 50px; border-radius:60px; cursor:pointer; max-width:300px; width:100%;
         }
 
-        /* fullscreen image (5 taps) */
+        /* ---------- FULLSCREEN IMAGE (SCALED, not stretched) ---------- */
         .fullscreen-image {
-            position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000;
-            z-index:10000; display:none; justify-content:center; align-items:center;
+            position:fixed; top:0; left:0; width:100vw; height:100vh;
+            background:#000; z-index:10000; display:none;
+            justify-content:center; align-items:center;
         }
-        .fullscreen-image img { width:100%; height:100%; object-fit:cover; }
+        .fullscreen-image img {
+            max-width:100%; max-height:100%; object-fit:scale-down; /* scaled, not stretched */
+        }
 
         /* no fake devices ever */
     </style>
 </head>
 <body>
-    <!-- top bar (always present) -->
+    <!-- top bar (fully cyan) -->
     <div class="top-bar">
         <div class="username" id="usernameDisplay">generating...</div>
         <div class="admin-badge" id="adminBadge">user</div>
     </div>
 
-    <!-- START SCREEN: device list + admin slider (bottom) -->
-    <div id="start-screen" class="active">
-        <div class="device-list-title">⚡ active devices</div>
-        <div id="devices-list">
-            <div style="text-align:center; color:#666; padding:40px;">waiting for real devices...</div>
-        </div>
-        <!-- bottom admin slider (fixed within start screen, but at bottom) -->
-        <div class="bottom-admin-slider">
-            <div class="admin-label">🔒 administrator access</div>
-            <div class="admin-slider-track" id="adminSliderTrack">
-                <div class="admin-slider-thumb" id="adminSliderThumb">🔒</div>
-                <div class="admin-slider-text">slide to enable admin mode</div>
+    <!-- SCREEN 1: HOME (device list + admin slider at bottom) -->
+    <div class="screen active" id="home-screen">
+        <div class="home-content">
+            <div class="device-list-title">⚡ active devices</div>
+            <div id="devices-list-container">
+                <div style="text-align:center; color:#666; padding:40px;">waiting for real devices...</div>
             </div>
-            <!-- no status text, just badge changes -->
+            <!-- admin slider fixed at bottom within home screen -->
+            <div class="admin-slider-section">
+                <div class="admin-label">🔒 administrator access</div>
+                <div class="admin-slider-track" id="adminSliderTrack">
+                    <div class="admin-slider-thumb" id="adminSliderThumb">🔒</div>
+                    <div class="admin-slider-text">slide to enable admin mode</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- SCREEN 2: SOUND SELECTION + COMBINED EXECUTE (properties inside) -->
-    <div class="full-screen" id="sound-execute-screen">
+    <!-- SCREEN 2: SOUND + EXECUTE (combined) -->
+    <div class="screen" id="sound-screen">
         <button class="back-btn" id="backFromSoundBtn">← back</button>
         <div class="sound-selector-title">🎵 select sound</div>
         <div id="sound-list-container"></div>
 
-        <!-- properties card (filled when sound selected) -->
+        <!-- properties card (hidden until sound selected) -->
         <div class="properties-card" id="propertiesCard" style="display:none;">
             <div class="prop-row"><span class="prop-label">device</span><span class="prop-value" id="propDeviceName">-</span></div>
             <div class="prop-row"><span class="prop-label">filename</span><span class="prop-value" id="propFilename">-</span></div>
@@ -172,7 +193,7 @@
             <div class="prop-row"><span class="prop-label">size</span><span class="prop-value" id="propSize">-</span></div>
         </div>
 
-        <!-- combined execute slider (only shows when sound selected) -->
+        <!-- execute slider (hidden until sound selected) -->
         <div class="combined-execute-slider" id="combinedExecuteSlider" style="display:none;">
             <div class="execute-track" id="executeTrack">
                 <div class="execute-thumb" id="executeThumb">→</div>
@@ -182,22 +203,22 @@
     </div>
 
     <!-- SCREEN 3: PLAYING -->
-    <div class="playing-screen" id="playing-screen">
+    <div class="screen" id="playing-screen">
         <div class="playing-icon">🔊</div>
         <div class="playing-device-name" id="playingDeviceName">-</div>
         <div class="playing-sound-name" id="playingSoundName">-</div>
         <button class="stop-btn-large" id="playingStopBtn">⏹ stop</button>
     </div>
 
-    <!-- fullscreen image (5 taps only on start screen) -->
+    <!-- fullscreen image (5 taps on home screen only) -->
     <div class="fullscreen-image" id="fullscreenImage">
         <img src="whoisthis.png" alt="secret">
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
-        (function(){
-            // ---------- SAFE STATE ----------
+        (function() {
+            // ---------- SAFE STATE (no fake devices) ----------
             const app = {
                 myUsername: '',
                 isAdmin: false,
@@ -210,7 +231,7 @@
                 tapCounter: 0,
                 timer: null,
 
-                // real mp3 library (github)
+                // real mp3 library (from github)
                 mp3Files: [
                     { file:'ambient.mp3', name:'Ambient Forest', duration:'3:45', size:'3.2 MB' },
                     { file:'ocean.mp3', name:'Ocean Waves', duration:'4:12', size:'3.8 MB' },
@@ -261,7 +282,8 @@
                     conn.on('data', (data) => { this.handleData(conn.peer, data); });
                     conn.on('close', () => { 
                         this.connections.delete(conn.peer); 
-                        this.renderDeviceList(); 
+                        if(document.getElementById('home-screen').classList.contains('active')) 
+                            this.renderDeviceList(); 
                     });
 
                     // send our info
@@ -292,20 +314,22 @@
                                 lastSeen: new Date(),
                                 online: true
                             };
-                            this.renderDeviceList();
+                            if(document.getElementById('home-screen').classList.contains('active')) 
+                                this.renderDeviceList();
                         }
                     }
                 },
 
-                // ---------- DEVICE LIST (no admin devices shown, no fake) ----------
+                // ---------- DEVICE LIST (only non‑admin real devices) ----------
                 renderDeviceList: function() {
-                    const listDiv = document.getElementById('devices-list');
-                    const peers = Array.from(this.connections.entries()).filter(([_,conn]) => {
-                        return conn.metadata && !conn.metadata.isAdmin;   // hide admin devices
-                    });
+                    const container = document.getElementById('devices-list-container');
+                    // filter out admin devices
+                    const peers = Array.from(this.connections.entries()).filter(([_,conn]) => 
+                        conn.metadata && !conn.metadata.isAdmin
+                    );
 
                     if(peers.length === 0) {
-                        listDiv.innerHTML = '<div style="text-align:center; color:#666; padding:40px;">no devices available</div>';
+                        container.innerHTML = '<div style="text-align:center; color:#666; padding:40px;">no devices available</div>';
                         return;
                     }
 
@@ -318,7 +342,8 @@
                         const age = 'now'; // simplified
 
                         html += `
-                            <div class="device-item online ${this.selectedDeviceId === id ? 'selected' : ''}" data-device-id="${id}" data-device-name="${username}">
+                            <div class="device-item online ${this.selectedDeviceId === id ? 'selected' : ''}" 
+                                 data-device-id="${id}" data-device-name="${username}">
                                 <span class="device-icon">📱</span>
                                 <div class="device-info">
                                     <div class="device-name">${username}</div>
@@ -331,12 +356,12 @@
                         `;
                     });
 
-                    listDiv.innerHTML = html;
+                    container.innerHTML = html;
 
-                    // attach click handlers
-                    listDiv.querySelectorAll('.device-item').forEach(el => {
+                    // click handler
+                    container.querySelectorAll('.device-item').forEach(el => {
                         el.addEventListener('click', () => {
-                            listDiv.querySelectorAll('.device-item').forEach(d => d.classList.remove('selected'));
+                            container.querySelectorAll('.device-item').forEach(d => d.classList.remove('selected'));
                             el.classList.add('selected');
                             this.selectedDeviceId = el.dataset.deviceId;
                             this.selectedDeviceName = el.dataset.deviceName;
@@ -344,7 +369,7 @@
                     });
                 },
 
-                // ---------- ADMIN SLIDER (bottom, permanent) ----------
+                // ---------- ADMIN SLIDER ----------
                 setupAdminSlider: function() {
                     const track = document.getElementById('adminSliderTrack');
                     const thumb = document.getElementById('adminSliderThumb');
@@ -362,7 +387,13 @@
                             document.getElementById('adminBadge').textContent = 'user';
                         }
                         // broadcast change
-                        this.connections.forEach(c => c.send({ type:'info', username:this.myUsername, isAdmin:this.isAdmin }));
+                        this.connections.forEach(c => c.send({ 
+                            type:'info', 
+                            username:this.myUsername, 
+                            isAdmin:this.isAdmin,
+                            battery: this.getBatteryLevel(),
+                            charging: this.getCharging()
+                        }));
                     };
 
                     thumb.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging=true; });
@@ -380,12 +411,11 @@
                         }
                         thumb.style.marginLeft = newLeft + 'px';
                     });
-                    thumb.addEventListener('touchend', (e) => {
+                    thumb.addEventListener('touchend', () => {
                         if(!this.isAdmin) thumb.style.marginLeft = '3px';
                         isDragging=false;
                     });
 
-                    // mouse fallback
                     thumb.addEventListener('mousedown', (e) => { e.preventDefault(); isDragging=true; });
                     document.addEventListener('mousemove', (e) => {
                         if(!isDragging) return;
@@ -435,7 +465,6 @@
                     });
                 },
 
-                // show properties + execute slider when sound selected
                 showPropertiesAndExecute: function() {
                     if(!this.selectedDeviceId || !this.selectedSound) return;
                     document.getElementById('propDeviceName').textContent = this.selectedDeviceName || 'device';
@@ -446,7 +475,7 @@
                     document.getElementById('combinedExecuteSlider').style.display = 'block';
                 },
 
-                // ---------- EXECUTE SLIDER (combined) ----------
+                // ---------- EXECUTE SLIDER ----------
                 setupExecuteSlider: function() {
                     const track = document.getElementById('executeTrack');
                     const thumb = document.getElementById('executeThumb');
@@ -455,7 +484,6 @@
                     const reset = () => { thumb.style.marginLeft = '3px'; isDragging=false; };
                     const execute = () => {
                         if(!this.selectedDeviceId || !this.selectedSound) return;
-                        // ring selected device (skip if admin)
                         const conn = this.connections.get(this.selectedDeviceId);
                         if(!conn) return;
                         conn.send({
@@ -501,7 +529,7 @@
                     document.addEventListener('mouseup', reset);
                 },
 
-                // ---------- PLAYBACK ----------
+                // ---------- PLAYBACK (sound play) ----------
                 playAudio: function(mp3) {
                     if(this.audioContext && this.audioElement) this.audioElement.pause();
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -515,38 +543,36 @@
                 stopAudio: function() {
                     if(this.audioElement) { this.audioElement.pause(); this.audioElement.currentTime=0; }
                     this.connections.forEach(c => c.send({ type:'stop' }));
-                    // return to start screen
-                    this.showStartScreen();
+                    // return to home screen
+                    this.showHomeScreen();
                 },
 
                 showPlayingScreen: function(device, sound) {
                     document.getElementById('playingDeviceName').textContent = device;
                     document.getElementById('playingSoundName').textContent = sound;
-                    document.getElementById('start-screen').classList.remove('active');
-                    document.getElementById('sound-execute-screen').classList.remove('active');
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                     document.getElementById('playing-screen').classList.add('active');
                 },
 
-                showStartScreen: function() {
-                    document.getElementById('playing-screen').classList.remove('active');
-                    document.getElementById('sound-execute-screen').classList.remove('active');
-                    document.getElementById('start-screen').classList.add('active');
-                    this.selectedDeviceId = null;  // reset selection
+                showHomeScreen: function() {
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    document.getElementById('home-screen').classList.add('active');
+                    this.selectedDeviceId = null;
                     this.selectedSound = null;
                     document.getElementById('propertiesCard').style.display = 'none';
                     document.getElementById('combinedExecuteSlider').style.display = 'none';
-                    this.renderDeviceList();
+                    this.renderDeviceList(); // refresh list
                 },
 
                 // ---------- NAVIGATION ----------
                 setupNavigation: function() {
-                    // from device list: click on device goes to sound screen
+                    // from home: when device selected, go to sound screen
                     document.addEventListener('click', (e) => {
                         const devItem = e.target.closest('.device-item');
-                        if(devItem && document.getElementById('start-screen').classList.contains('active')) {
+                        if(devItem && document.getElementById('home-screen').classList.contains('active')) {
                             if(this.selectedDeviceId) {
-                                document.getElementById('start-screen').classList.remove('active');
-                                document.getElementById('sound-execute-screen').classList.add('active');
+                                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                                document.getElementById('sound-screen').classList.add('active');
                                 // reset sound selection
                                 this.selectedSound = null;
                                 document.getElementById('propertiesCard').style.display = 'none';
@@ -557,20 +583,20 @@
                     });
 
                     document.getElementById('backFromSoundBtn').addEventListener('click', () => {
-                        this.showStartScreen();
+                        this.showHomeScreen();
                     });
 
                     document.getElementById('playingStopBtn').addEventListener('click', () => {
                         this.stopAudio();
-                        this.showStartScreen();
+                        this.showHomeScreen();
                     });
                 },
 
-                // ---------- 5-TAP (only on start screen) ----------
+                // ---------- 5-TAP (only on home screen) ----------
                 setupTapDetection: function() {
                     document.body.addEventListener('click', (e) => {
-                        const startActive = document.getElementById('start-screen').classList.contains('active');
-                        if(!startActive) return;  // only on start screen
+                        const homeActive = document.getElementById('home-screen').classList.contains('active');
+                        if(!homeActive) return;
 
                         this.tapCounter++;
                         if(this.timer) clearTimeout(this.timer);
@@ -579,6 +605,11 @@
                             document.getElementById('fullscreenImage').style.display = 'flex';
                             this.tapCounter = 0;
                         }
+                    });
+
+                    // click on image hides it
+                    document.getElementById('fullscreenImage').addEventListener('click', function() {
+                        this.style.display = 'none';
                     });
                 },
 
