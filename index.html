@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SOUNDBEAM · P2P</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #001f24;
+            display: flex;
+            flex-direction: column;
+            color: #d9f2f2;
+            position: relative;
+        }
+
+        /* === TOP BLUE BAR === */
+        .top-bar {
+            background: #0a4d5c;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-bottom: 4px solid #2dd4bf;
+            box-shadow: 0 4px 12px rgba(0, 255, 200, 0.2);
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .username {
+            color: #b2f0e4;
+            text-shadow: 0 0 8px #2dd4bf;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .battery {
+            background: #0f5f70;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 1rem;
+            border: 1px solid #4fd1c5;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* === MAIN CONTAINER (VERTICAL) === */
+        .container {
+            flex: 1;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* === DEVICES SECTION === */
+        .section-title {
+            color: #2dd4bf;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .devices-list {
+            background: #05262e;
+            border-radius: 24px;
+            padding: 12px 8px;
+            border: 1px solid #1e6f7a;
+            min-height: 140px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .device-item {
+            background: #0b3e48;
+            margin: 8px 6px;
+            padding: 16px 18px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid #2dd4bf;
+            box-shadow: 0 4px 0 #0a2a30;
+            transition: 0.1s ease;
+            cursor: pointer;
+        }
+
+        .device-item:active {
+            transform: scale(0.98);
+            background: #105a68;
+        }
+
+        .device-icon {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 4px cyan);
+        }
+
+        .device-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .device-status {
+            color: #4fd1c5;
+            font-size: 0.9rem;
+            background: #0f2f36;
+            padding: 4px 12px;
+            border-radius: 30px;
+        }
+
+        /* === MP3 SELECTOR === */
+        .mp3-panel {
+            background: #052e36;
+            border-radius: 32px;
+            padding: 20px;
+            border: 2px solid #2dd4bf;
+        }
+
+        .mp3-label {
+            font-size: 1rem;
+            color: #91e6d3;
+            margin-bottom: 8px;
+        }
+
+        .mp3-select {
+            width: 100%;
+            padding: 16px 18px;
+            background: #0b4956;
+            border: 2px solid #2dd4bf;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .mp3-select option {
+            background: #03222a;
+        }
+
+        /* === PROPERTIES PANEL === */
+        .properties {
+            background: #04343d;
+            border-radius: 28px;
+            padding: 20px;
+            border-left: 8px solid #2dd4bf;
+            margin: 10px 0;
+        }
+
+        .prop-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #1f7e8a;
+            font-size: 1.1rem;
+        }
+
+        .prop-label {
+            color: #8ad9d0;
+        }
+
+        .prop-value {
+            font-weight: 700;
+            color: white;
+        }
+
+        /* === SLIDER (exactly like slide to unlock) === */
+        .slider-container {
+            margin: 25px 0 10px;
+            position: relative;
+        }
+
+        .slider-track {
+            background: #10363f;
+            height: 70px;
+            border-radius: 60px;
+            border: 3px solid #2dd4bf;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 0 #0a2d33;
+        }
+
+        .slider-thumb {
+            width: 65px;
+            height: 65px;
+            background: #2dd4bf;
+            border-radius: 50%;
+            margin-left: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #001f24;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 0 15px cyan;
+            cursor: grab;
+            transition: 0.2s ease;
+            z-index: 5;
+        }
+
+        .slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.02);
+            background: #8af0e0;
+        }
+
+        .slider-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: #7faeb6;
+            font-size: 1.3rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            pointer-events: none;
+        }
+
+        /* === BUTTONS ROW === */
+        .action-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0 20px;
+        }
+
+        .action-btn {
+            background: #0a4f5c;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 18px 30px;
+            border-radius: 60px;
+            border: 2px solid #2dd4bf;
+            box-shadow: 0 6px 0 #07333d;
+            transition: 0.1s;
+            cursor: pointer;
+            min-width: 140px;
+            letter-spacing: 1px;
+        }
+
+        .action-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #07333d;
+        }
+
+        .stop-btn {
+            background: #a12929;
+            border-color: #ff7b7b;
+            box-shadow: 0 6px 0 #631818;
+        }
+
+        /* === FULLSCREEN EASTER EGG (hidden by default) === */
+        .fullscreen-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fullscreen-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* empty state */
+        .no-devices {
+            text-align: center;
+            color: #4f9ba8;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        /* tap detector zone (whole body except buttons) */
+        .tap-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top bar: username + battery percentage -->
+    <div class="top-bar">
+        <div class="username" id="usernameDisplay">loading...</div>
+        <div class="battery" id="batteryDisplay">--%</div>
+    </div>
+
+    <div class="container">
+        <!-- Active devices list -->
+        <div>
+            <div class="section-title">📱 ACTIVE DEVICES</div>
+            <div class="devices-list" id="devicesList">
+                <div class="no-devices">Waiting for peers...</div>
+            </div>
+        </div>
+
+        <!-- MP3 selector -->
+        <div class="mp3-panel">
+            <div class="mp3-label">🎵 SELECT TRACK</div>
+            <select class="mp3-select" id="mp3Select">
+                <option value="default">Choose MP3...</option>
+            </select>
+        </div>
+
+        <!-- Properties panel (shown after click) -->
+        <div class="properties" id="propertiesPanel" style="display: none;">
+            <div class="prop-row">
+                <span class="prop-label">FILENAME</span>
+                <span class="prop-value" id="propFilename">-</span>
+            </div>
+            <div class="prop-row">
+                <span class="prop-label">DURATION</span>
+                <span class="prop-value" id="propDuration">-</span>
+            </div>
+            <div class="prop-row">
+                <span class="prop-label">SIZE</span>
+                <span class="prop-value" id="propSize">-</span>
+            </div>
+            <div class="prop-row">
+                <span class="prop-label">BITRATE</span>
+                <span class="prop-value" id="propBitrate">-</span>
+            </div>
+        </div>
+
+        <!-- SLIDE TO EXECUTE (slider) -->
+        <div class="slider-container" id="sliderContainer" style="display: none;">
+            <div class="slider-track" id="sliderTrack">
+                <div class="slider-thumb" id="sliderThumb">→</div>
+                <div class="slider-text" id="sliderText">slide to execute</div>
+            </div>
+        </div>
+
+        <!-- PLAY/STOP buttons -->
+        <div class="action-row">
+            <button class="action-btn" id="playBtn" disabled>▶ PLAY</button>
+            <button class="action-btn stop-btn" id="stopBtn" disabled>⏹ STOP</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen image (easter egg) -->
+    <div class="fullscreen-image" id="fullscreenImage">
+        <img src="whoisthis.png" alt="easter egg" id="easterEggImg">
+    </div>
+
+    <script>
+        (function() {
+            // ========== CONFIG ==========
+            const TAP_COUNT_TO_REVEAL = 5;
+            const MP3_LIBRARY = [
+                { name: 'Ambient Forest', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', duration: '3:45' },
+                { name: 'Ocean Waves', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', duration: '4:12' },
+                { name: 'Synth Pad', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', duration: '5:30' },
+                { name: 'Soft Piano', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', duration: '3:20' }
+            ];
+
+            // ========== STATE ==========
+            let currentUsername = '';
+            let tapCounter = 0;
+            let tapTimer = null;
+            let selectedDeviceId = null;
+            let selectedMp3 = null;
+            let isPlaying = false;
+            let audioContext = null;
+            let audioElement = null;
+            let activePeers = new Map(); // id -> peer info
+            
+            // WebRTC signaling (using public server)
+            const SIGNALING_SERVER = 'wss://ws.audioserve.workers.dev'; // public relay
+            
+            // ========== INIT ==========
+            function init() {
+                generateRandomUsername();
+                startBatteryMonitoring();
+                populateMp3Select();
+                setupTapDetection();
+                initWebRTC();
+                
+                // generate some fake devices for demo (remove in production)
+                setTimeout(() => {
+                    if (activePeers.size === 0) {
+                        // demo devices
+                        addDemoDevice('android-klm8', 85);
+                        addDemoDevice('iphone-xr3', 62);
+                        addDemoDevice('web-tablet', 41);
+                    }
+                }, 2000);
+            }
+
+            // ========== USERNAME ==========
+            function generateRandomUsername() {
+                const adj = ['cosmic', 'lunar', 'solar', 'cyber', 'audio', 'wave', 'pulse', 'echo', 'nova', 'flux'];
+                const nouns = ['beamer', 'caster', 'drone', 'pod', 'relay', 'node', 'link', 'grid', 'cell', 'hub'];
+                const num = Math.floor(Math.random() * 1000);
+                currentUsername = adj[Math.floor(Math.random()*adj.length)] + 
+                                 nouns[Math.floor(Math.random()*nouns.length)] + 
+                                 num;
+                document.getElementById('usernameDisplay').textContent = currentUsername;
+            }
+
+            // ========== BATTERY ==========
+            function startBatteryMonitoring() {
+                if ('getBattery' in navigator) {
+                    navigator.getBattery().then(battery => {
+                        updateBatteryDisplay(battery);
+                        battery.addEventListener('levelchange', () => updateBatteryDisplay(battery));
+                    });
+                } else {
+                    // fallback: random percentage
+                    setInterval(() => {
+                        const rnd = Math.floor(Math.random() * 41) + 60; // 60-100%
+                        document.getElementById('batteryDisplay').textContent = rnd + '%';
+                    }, 5000);
+                }
+            }
+
+            function updateBatteryDisplay(battery) {
+                const level = Math.floor(battery.level * 100);
+                document.getElementById('batteryDisplay').textContent = level + '%';
+            }
+
+            // ========== MP3 SELECT ==========
+            function populateMp3Select() {
+                const select = document.getElementById('mp3Select');
+                MP3_LIBRARY.forEach((mp3, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = mp3.name;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', (e) => {
+                    const idx = e.target.value;
+                    if (idx && idx !== 'default') {
+                        const mp3 = MP3_LIBRARY[idx];
+                        selectedMp3 = mp3;
+                        showProperties(mp3);
+                        document.getElementById('sliderContainer').style.display = 'block';
+                    } else {
+                        document.getElementById('propertiesPanel').style.display = 'none';
+                        document.getElementById('sliderContainer').style.display = 'none';
+                        selectedMp3 = null;
+                    }
+                });
+            }
+
+            // ========== PROPERTIES ==========
+            function showProperties(mp3) {
+                document.getElementById('propFilename').textContent = mp3.name;
+                document.getElementById('propDuration').textContent = mp3.duration;
+                document.getElementById('propSize').textContent = '~3.2 MB';
+                document.getElementById('propBitrate').textContent = '192 kbps';
+                document.getElementById('propertiesPanel').style.display = 'block';
+            }
+
+            // ========== SLIDER LOGIC (slide to execute) ==========
+            function setupSlider() {
+                const track = document.getElementById('sliderTrack');
+                const thumb = document.getElementById('sliderThumb');
+                const text = document.getElementById('sliderText');
+                let isDragging = false;
+
+                const resetSlider = () => {
+                    thumb.style.marginLeft = '5px';
+                    text.textContent = 'slide to execute';
+                    isDragging = false;
+                };
+
+                thumb.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                });
+
+                thumb.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    
+                    const touch = e.touches[0];
+                    const trackRect = track.getBoundingClientRect();
+                    const thumbRect = thumb.getBoundingClientRect();
+                    
+                    let newLeft = touch.clientX - trackRect.left - (thumbRect.width / 2);
+                    
+                    // constraints
+                    if (newLeft < 5) newLeft = 5;
+                    if (newLeft > trackRect.width - thumbRect.width - 5) {
+                        newLeft = trackRect.width - thumbRect.width - 5;
+                    }
+                    
+                    thumb.style.marginLeft = newLeft + 'px';
+                    
+                    // check if executed (thumb near end)
+                    if (newLeft > trackRect.width - thumbRect.width - 20) {
+                        // EXECUTE!
+                        executePlay();
+                        resetSlider();
+                    }
+                });
+
+                thumb.addEventListener('touchend', resetSlider);
+                thumb.addEventListener('touchcancel', resetSlider);
+
+                // mouse support (for dev tools)
+                thumb.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    
+                    const trackRect = track.getBoundingClientRect();
+                    const thumbRect = thumb.getBoundingClientRect();
+                    
+                    let newLeft = e.clientX - trackRect.left - (thumbRect.width / 2);
+                    
+                    if (newLeft < 5) newLeft = 5;
+                    if (newLeft > trackRect.width - thumbRect.width - 5) {
+                        newLeft = trackRect.width - thumbRect.width - 5;
+                    }
+                    
+                    thumb.style.marginLeft = newLeft + 'px';
+                    
+                    if (newLeft > trackRect.width - thumbRect.width - 20) {
+                        executePlay();
+                        resetSlider();
+                    }
+                });
+
+                document.addEventListener('mouseup', resetSlider);
+            }
+
+            // ========== PLAY/STOP ==========
+            function executePlay() {
+                if (!selectedMp3 || !selectedDeviceId) {
+                    alert('Select a device and MP3 first');
+                    return;
+                }
+
+                // Play audio locally (in real P2P this would stream to remote)
+                if (audioContext && audioElement) {
+                    audioElement.pause();
+                    audioElement.currentTime = 0;
+                }
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioElement = new Audio(selectedMp3.url);
+                const source = audioContext.createMediaElementSource(audioElement);
+                source.connect(audioContext.destination);
+                
+                audioElement.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('playBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                }).catch(console.error);
+            }
+
+            function stopPlay() {
+                if (audioElement) {
+                    audioElement.pause();
+                    audioElement.currentTime = 0;
+                    isPlaying = false;
+                    document.getElementById('playBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                }
+            }
+
+            // ========== DEVICE CLICK ==========
+            function setupDeviceClicks() {
+                document.querySelectorAll('.device-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        // remove previous selection
+                        document.querySelectorAll('.device-item').forEach(d => 
+                            d.style.background = '#0b3e48');
+                        item.style.background = '#1b6f80';
+                        selectedDeviceId = item.dataset.id;
+                    });
+                });
+            }
+
+            // ========== TAP DETECTION (5 taps anywhere) ==========
+            function setupTapDetection() {
+                document.body.addEventListener('click', (e) => {
+                    // ignore clicks on buttons, slider, select
+                    if (e.target.closest('button') || 
+                        e.target.closest('.slider-thumb') ||
+                        e.target.closest('select')) {
+                        return;
+                    }
+
+                    tapCounter++;
+                    
+                    if (tapTimer) clearTimeout(tapTimer);
+                    tapTimer = setTimeout(() => {
+                        tapCounter = 0;
+                    }, 1000);
+
+                    if (tapCounter >= TAP_COUNT_TO_REVEAL) {
+                        showFullscreenImage();
+                        tapCounter = 0;
+                        clearTimeout(tapTimer);
+                    }
+                });
+            }
+
+            function showFullscreenImage() {
+                const fsDiv = document.getElementById('fullscreenImage');
+                fsDiv.style.display = 'flex';
+                
+                // tap anywhere on image to hide
+                fsDiv.onclick = () => {
+                    fsDiv.style.display = 'none';
+                };
+            }
+
+            // ========== WEBRTC STUB (real P2P would go here) ==========
+            function initWebRTC() {
+                // For a full implementation we'd use PeerJS or WebRTC
+                // But to keep single-file, we'll stub with demo devices
+                console.log('WebRTC signaling ready (using public relay)');
+                
+                // Setup slider after DOM ready
+                setTimeout(setupSlider, 500);
+            }
+
+            function addDemoDevice(name, battery) {
+                const list = document.getElementById('devicesList');
+                const noDevices = list.querySelector('.no-devices');
+                if (noDevices) noDevices.remove();
+
+                const id = 'dev_' + Math.random().toString(36).substr(2, 6);
+                const div = document.createElement('div');
+                div.className = 'device-item';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <span class="device-icon">📱</span>
+                    <span class="device-name">${name}</span>
+                    <span class="device-status">${battery}%</span>
+                `;
+                list.appendChild(div);
+                
+                setupDeviceClicks();
+            }
+
+            // ========== BUTTON LISTENERS ==========
+            document.getElementById('playBtn').addEventListener('click', executePlay);
+            document.getElementById('stopBtn').addEventListener('click', stopPlay);
+
+            // start everything
+            init();
+        })();
+    </script>
+</body>
+</html>
