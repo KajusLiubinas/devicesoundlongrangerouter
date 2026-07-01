@@ -2,6 +2,313 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DSLR - Core</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <div id="screen-login" class="screen active">
+        <div class="header">DEVICE SOUND LONGRANGE ROUTER (DSLR)</div>
+        <div class="content-center">
+            <div class="user-display">ASSIGNED IDENTIFIER:</div>
+            <div id="generated-username" class="cyan-text large-text">----</div>
+            
+            <div class="unlock-wrapper">
+                <div class="unlock-text">SLIDE RIGHT TO UNLOCK ADMIN</div>
+                <input type="range" id="admin-slider" min="0" max="100" value="0" class="unlock-slider">
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-secret" class="screen" onclick="hideSecretScreen()">
+        <img src="whoisthis.png" alt="Who Is This" class="fullscreen-stretch">
+    </div>
+
+    <div id="screen-devices" class="screen">
+        <div class="header">DSLR // LIVE TARGET NODES</div>
+        <div class="scroll-list">
+            <h3>ACTIVE CONSOLE LIST</h3>
+            <div id="active-list"></div>
+            <hr style="border: none; height: 1px; background: #2d2d35; margin: 15px 0;">
+            <h3>DISCONNECTED LOGS</h3>
+            <div id="offline-list"></div>
+        </div>
+    </div>
+
+    <div id="screen-sounds" class="screen">
+        <div class="header">SELECT SOURCE TARGET</div>
+        
+        <div style="margin-bottom: 15px;">
+            <button class="btn upload-btn" onclick="document.getElementById('file-input').click()">+ UPLOAD MP3 OR VIDEO</button>
+            <input type="file" id="file-input" accept="audio/*,video/*" style="display: none;">
+        </div>
+
+        <div class="scroll-list" id="sound-buttons-container">
+            <button class="btn sound-select-btn" data-sound="alarm.mp3">Industrial Alarm</button>
+            <button class="btn sound-select-btn" data-sound="beep.mp3">High-Freq Sine Beep</button>
+            <button class="btn sound-select-btn" data-sound="static.mp3">White Noise Burst</button>
+            <button class="btn sound-select-btn" data-sound="glitch.mp3">System Crash Sound</button>
+        </div>
+        <button class="btn back-btn" onclick="showScreen('screen-devices')">CANCEL & BACK</button>
+    </div>
+
+    <div id="screen-properties" class="screen">
+        <div class="header">EXECUTION CONFIGURATION</div>
+        <div class="control-container">
+            <div class="prop-row">
+                <label>VOLUME INTENSITY</label>
+                <input type="range" id="prop-volume" min="0" max="1" step="0.1" value="1" class="standard-slider">
+            </div>
+            <div class="prop-row">
+                <label>TIME OFFSET DELAY (SECONDS)</label>
+                <input type="number" id="prop-offset" min="0" value="0" pattern="[0-9]*" inputmode="numeric">
+            </div>
+            <div class="prop-row">
+                <label>STOP LIMIT RUN-DURATION (SEC, LEAVE BLANK FOR CONTINUOUS)</label>
+                <input type="number" id="prop-duration" min="1" placeholder="Empty = Manual Stop" pattern="[0-9]*" inputmode="numeric">
+            </div>
+
+            <div class="unlock-wrapper execute-wrapper">
+                <div class="unlock-text">SLIDE RIGHT TO EXECUTE PAYLOAD</div>
+                <input type="range" id="execute-slider" min="0" max="100" value="0" class="unlock-slider">
+            </div>
+        </div>
+        <button class="btn back-btn" onclick="showScreen('screen-sounds')">BACK TO SOUNDS</button>
+    </div>
+
+    <div id="screen-playing" class="screen">
+        <div class="header">DSLR ACTIVE TRANSMISSION IN PROGRESS</div>
+        <div class="content-center">
+            <div class="cyan-text large-text">ROUTING AUDIO PACKETS...</div>
+            <p style="margin-top:20px; color:#aaa;">Target Device Node Is Currently Playing Sound Output</p>
+        </div>
+        <button id="kill-btn" class="btn emergency-btn">STOP AUDIO & RETURN LIST</button>
+    </div>
+
+    <script>
+        const socket = io();
+        
+        let myUsername = "";
+        let isAdmin = false;
+        let selectedTargetId = null;
+        let selectedSoundFile = "";
+        let audioTimeout = null;
+        let audioDurationTimeout = null;
+        let currentAudioInstance = null;
+
+        // 1. Generate Username Identifier
+        const words = ["cool", "goon", "super", "boy", "men", "official", "women", "food"];
+        const w1 = words[Math.floor(Math.random() * words.length)];
+        const w2 = words[Math.floor(Math.random() * words.length)];
+        const digits = [2,3,4][Math.floor(Math.random()*3)];
+        const num = Math.floor(Math.random() * Math.pow(10, digits)).toString().padStart(digits, '0');
+        myUsername = w1 + w2 + num;
+        document.getElementById('generated-username').textContent = myUsername;
+
+        // 2. Battery Telemetry (Handles fallback securely if iOS restrictions apply)
+        let batteryPct = "100%";
+        let isCharging = false;
+        if (navigator.getBattery) {
+            navigator.getBattery().then(bat => {
+                function updateBat() {
+                    batteryPct = Math.round(bat.level * 100) + "%";
+                    isCharging = bat.charging;
+                    socket.emit('update-specs', { battery: batteryPct, charging: isCharging });
+                }
+                updateBat();
+                bat.addEventListener('levelchange', updateBat);
+                bat.addEventListener('chargingchange', updateBat);
+            });
+        }
+
+        // 3. Admin Slider Control
+        const adminSlider = document.getElementById('admin-slider');
+        adminSlider.addEventListener('change', (e) => {
+            if (e.target.value == "100") {
+                isAdmin = true;
+                socket.emit('register-device', { username: myUsername, isAdmin: true });
+                showScreen('screen-devices');
+            } else {
+                adminSlider.value = 0;
+            }
+        });
+        adminSlider.addEventListener('touchend', () => { setTimeout(() => { if(adminSlider.value < 100) adminSlider.value = 0; }, 100); });
+        adminSlider.addEventListener('mouseup', () => { if(adminSlider.value < 100) adminSlider.value = 0; });
+
+        // 4. Robust 5-Tap Frame Listener for whoisthis.png (Binds to whole screen body context cleanly)
+        let tapCount = 0;
+        let lastTapTime = 0;
+        document.getElementById('screen-login').addEventListener('click', (e) => {
+            // Avoid getting blocked by interactive input ranges
+            if (e.target.className.contains && e.target.className.contains('unlock-slider')) return;
+            
+            const currentTime = Date.now();
+            if (currentTime - lastTapTime > 1500) tapCount = 0; // Reset if clicks are too slow
+            
+            lastTapTime = currentTime;
+            tapCount++;
+            
+            if (tapCount >= 5) {
+                tapCount = 0;
+                showScreen('screen-secret');
+            }
+        });
+
+        function hideSecretScreen() {
+            showScreen('screen-login');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // 5. Admin Dashboard Sync
+        socket.on('dashboard-update', (data) => {
+            if (!isAdmin) return;
+            
+            const activeContainer = document.getElementById('active-list');
+            activeContainer.innerHTML = "";
+            data.online.forEach(dev => {
+                const uptime = Math.floor((Date.now() - dev.connectedAt)/1000);
+                const item = document.createElement('div');
+                item.className = "device-item";
+                item.innerHTML = `
+                    <div><strong>${dev.username}</strong> ${dev.charging ? '⚡' : '🔋'} ${dev.battery}</div>
+                    <div style="font-size:0.8rem; color:#aaa;">Live: ${uptime}s ago</div>
+                `;
+                item.addEventListener('click', () => {
+                    selectedTargetId = dev.id;
+                    showScreen('screen-sounds');
+                });
+                activeContainer.appendChild(item);
+            });
+
+            const offlineContainer = document.getElementById('offline-list');
+            offlineContainer.innerHTML = "";
+            data.offline.forEach(dev => {
+                const item = document.createElement('div');
+                item.className = "device-item offline";
+                item.innerHTML = `
+                    <div><strong>${dev.username}</strong> [OFFLINE]</div>
+                    <div style="font-size:0.8rem; color:#71717a;">Dropped: ${dev.offlineAt} (${dev.duration})</div>
+                `;
+                offlineContainer.appendChild(item);
+            });
+        });
+
+        // 6. Handle File Submissions
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('audioFile', file);
+
+            fetch('/upload-mp3', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .catch(err => console.error(err));
+        });
+
+        // 7. Refresh Payload Available Map
+        socket.on('sound-list-update', (customSounds) => {
+            const container = document.getElementById('sound-buttons-container');
+            container.innerHTML = `
+                <button class="btn sound-select-btn" data-sound="alarm.mp3">Industrial Alarm</button>
+                <button class="btn sound-select-btn" data-sound="beep.mp3">High-Freq Sine Beep</button>
+                <button class="btn sound-select-btn" data-sound="static.mp3">White Noise Burst</button>
+                <button class="btn sound-select-btn" data-sound="glitch.mp3">System Crash Sound</button>
+            `;
+
+            customSounds.forEach(soundFile => {
+                const btn = document.createElement('button');
+                btn.className = "btn sound-select-btn";
+                btn.setAttribute('data-sound', soundFile);
+                
+                const isVideo = soundFile.match(/\.(mp4|webm|mov|avi)$/i);
+                btn.textContent = `${isVideo ? '🎬 [VIDEO-AUDIO]' : '📁'} ${soundFile}`;
+                container.appendChild(btn);
+            });
+
+            document.querySelectorAll('.sound-select-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedSoundFile = btn.getAttribute('data-sound');
+                    document.getElementById('execute-slider').value = 0;
+                    showScreen('screen-properties');
+                });
+            });
+        });
+
+        // 8. Releasable Execution Swipe Engine (Triggers explicitly upon release change evaluation)
+        const execSlider = document.getElementById('execute-slider');
+        execSlider.addEventListener('change', (e) => {
+            if (e.target.value == "100") {
+                const vol = parseFloat(document.getElementById('prop-volume').value);
+                const offset = parseInt(document.getElementById('prop-offset').value) || 0;
+                const duration = parseInt(document.getElementById('prop-duration').value) || null;
+
+                socket.emit('send-sound-command', {
+                    targetId: selectedTargetId,
+                    file: selectedSoundFile,
+                    volume: vol,
+                    offset: offset,
+                    duration: duration
+                });
+                showScreen('screen-playing');
+            } else {
+                execSlider.value = 0;
+            }
+        });
+        execSlider.addEventListener('touchend', () => { setTimeout(() => { if(execSlider.value < 100) execSlider.value = 0; }, 100); });
+        execSlider.addEventListener('mouseup', () => { if(execSlider.value < 100) execSlider.value = 0; });
+
+        // 9. Audio Killswitch Intercept
+        document.getElementById('kill-btn').addEventListener('click', () => {
+            socket.emit('send-stop-command', { targetId: selectedTargetId });
+            showScreen('screen-devices');
+        });
+
+        // --- RECEIVER PROCESSES (Ensures iOS Audio API activation) ---
+        socket.on('execute-sound', (data) => {
+            clearTimeout(audioTimeout);
+            clearTimeout(audioDurationTimeout);
+            if(currentAudioInstance) currentAudioInstance.pause();
+
+            audioTimeout = setTimeout(() => {
+                currentAudioInstance = new Audio(data.file);
+                currentAudioInstance.volume = data.volume;
+                // Fixes iOS restriction requiring explicit play promise catching
+                let playPromise = currentAudioInstance.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => { console.log("Audio playback waiting for interaction intercept:", error); });
+                }
+
+                if (data.duration) {
+                    audioDurationTimeout = setTimeout(() => {
+                        currentAudioInstance.pause();
+                    }, data.duration * 1000);
+                }
+            }, data.offset * 1000);
+        });
+
+        socket.on('halt-sound', () => {
+            clearTimeout(audioTimeout);
+            clearTimeout(audioDurationTimeout);
+            if(currentAudioInstance) {
+                currentAudioInstance.pause();
+                currentAudioInstance.currentTime = 0;
+            }
+        });
+
+        socket.emit('register-device', { username: myUsername, isAdmin: false, battery: batteryPct, charging: isCharging });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DSLR - Core</title>
     <link rel="stylesheet" href="style.css">
