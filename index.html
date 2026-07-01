@@ -2,6 +2,296 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DSLR - Router</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <div id="screen-login" class="screen active">
+        <div class="header">DEVICE SOUND LONGRANGE ROUTER (DSLR)</div>
+        <div class="content-center">
+            <div class="user-display">ASSIGNED IDENTIFIER:</div>
+            <div id="generated-username" class="cyan-text large-text">----</div>
+            
+            <div class="slider-box">
+                <label>REQUEST SYSTEM ELEVATION (ADMIN)</label>
+                <input type="range" id="admin-slider" min="0" max="1" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-secret" class="screen">
+        <img src="whoisthis.png" alt="Who Is This" class="fullscreen-stretch">
+    </div>
+
+    <div id="screen-devices" class="screen">
+        <div class="header">DSLR // LIVE TARGET NODES</div>
+        <div class="scroll-list">
+            <h3>ACTIVE CONSOLE LIST</h3>
+            <div id="active-list"></div>
+            <hr style="border: 1px solid #333; margin: 15px 0;">
+            <h3>DISCONNECTED LOGS</h3>
+            <div id="offline-list"></div>
+        </div>
+    </div>
+
+    <div id="screen-sounds" class="screen">
+        <div class="header">SELECT SOURCE TARGET</div>
+        
+        <div style="margin-bottom: 15px;">
+            <button class="btn" style="border-color: #00f2ff; color: #00f2ff;" onclick="document.getElementById('file-input').click()">+ UPLOAD MP3 OR VIDEO</button>
+            <input type="file" id="file-input" accept="audio/*,video/*" style="display: none;">
+        </div>
+
+        <div class="scroll-list" id="sound-buttons-container">
+            <button class="btn sound-select-btn" data-sound="alarm.mp3">Industrial Alarm</button>
+            <button class="btn sound-select-btn" data-sound="beep.mp3">High-Freq Sine Beep</button>
+            <button class="btn sound-select-btn" data-sound="static.mp3">White Noise Burst</button>
+            <button class="btn sound-select-btn" data-sound="glitch.mp3">System Crash Sound</button>
+        </div>
+        <button class="btn back-btn" onclick="showScreen('screen-devices')">CANCEL & BACK</button>
+    </div>
+
+    <div id="screen-properties" class="screen">
+        <div class="header">EXECUTION CONFIGURATION</div>
+        <div class="control-container">
+            <div class="prop-row">
+                <label>VOLUME INTENSITY</label>
+                <input type="range" id="prop-volume" min="0" max="1" step="0.1" value="1">
+            </div>
+            <div class="prop-row">
+                <label>TIME OFFSET DELAY (SECONDS)</label>
+                <input type="number" id="prop-offset" min="0" value="0">
+            </div>
+            <div class="prop-row">
+                <label>STOP LIMIT RUN-DURATION (SEC, LEAVE BLANK FOR CONTINUOUS)</label>
+                <input type="number" id="prop-duration" min="1" placeholder="Empty = Manual Stop">
+            </div>
+
+            <div class="slider-box execute-box">
+                <label class="cyan-text">SLIDE RIGHT TO EXECUTE NODE SOUND</label>
+                <input type="range" id="execute-slider" min="0" max="100" value="0">
+            </div>
+        </div>
+        <button class="btn back-btn" onclick="showScreen('screen-sounds')">BACK TO SOUNDS</button>
+    </div>
+
+    <div id="screen-playing" class="screen">
+        <div class="header warning-pulse">DSLR ACTIVE TRANSMISSION IN PROGRESS</div>
+        <div class="content-center">
+            <div class="cyan-text large-text pulse">ROUTING AUDIO PACKETS...</div>
+            <p style="margin-top:20px; color:#aaa;">Target Device Node Is Currently Playing Sound Output</p>
+        </div>
+        <button id="kill-btn" class="btn emergency-btn">STOP AUDIO & RETURN LIST</button>
+    </div>
+
+    <script>
+        const socket = io();
+        
+        let myUsername = "";
+        let isAdmin = false;
+        let selectedTargetId = null;
+        let selectedSoundFile = "";
+        let audioTimeout = null;
+        let audioDurationTimeout = null;
+        let currentAudioInstance = null;
+
+        // 1. Generate Custom Identifier
+        const words = ["cool", "goon", "super", "boy", "men", "official", "women", "food"];
+        const w1 = words[Math.floor(Math.random() * words.length)];
+        const w2 = words[Math.floor(Math.random() * words.length)];
+        const digits = [2,3,4][Math.floor(Math.random()*3)];
+        const num = Math.floor(Math.random() * Math.pow(10, digits)).toString().padStart(digits, '0');
+        myUsername = w1 + w2 + num;
+        document.getElementById('generated-username').textContent = myUsername;
+
+        // 2. Continuous Battery Telemetry Mapping
+        let batteryPct = "??%";
+        let isCharging = false;
+        if (navigator.getBattery) {
+            navigator.getBattery().then(bat => {
+                function updateBat() {
+                    batteryPct = Math.round(bat.level * 100) + "%";
+                    isCharging = bat.charging;
+                    socket.emit('update-specs', { battery: batteryPct, charging: isCharging });
+                }
+                updateBat();
+                bat.addEventListener('levelchange', updateBat);
+                bat.addEventListener('chargingchange', updateBat);
+            });
+        }
+
+        // 3. Admin Elevation Slider Setup
+        document.getElementById('admin-slider').addEventListener('input', (e) => {
+            if(e.target.value == "1") {
+                isAdmin = true;
+                socket.emit('register-device', { username: myUsername, isAdmin: true });
+                showScreen('screen-devices');
+            }
+        });
+
+        // 4. Hidden 5-Tap Frame Listener
+        let tapCount = 0;
+        document.getElementById('screen-login').addEventListener('click', (e) => {
+            if (e.target.id === 'screen-login') {
+                tapCount++;
+                if (tapCount >= 5) {
+                    showScreen('screen-secret');
+                }
+            }
+        });
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // 5. Update Dynamic Admin Terminal View
+        socket.on('dashboard-update', (data) => {
+            if (!isAdmin) return;
+            
+            const activeContainer = document.getElementById('active-list');
+            activeContainer.innerHTML = "";
+            data.online.forEach(dev => {
+                const uptime = Math.floor((Date.now() - dev.connectedAt)/1000);
+                const item = document.createElement('div');
+                item.className = "device-item";
+                item.innerHTML = `
+                    <div><strong>${dev.username}</strong> ${dev.charging ? '⚡' : '🔋'} ${dev.battery}</div>
+                    <div style="font-size:0.8rem; color:#aaa;">Live: ${uptime}s ago</div>
+                `;
+                item.addEventListener('click', () => {
+                    selectedTargetId = dev.id;
+                    showScreen('screen-sounds');
+                });
+                activeContainer.appendChild(item);
+            });
+
+            const offlineContainer = document.getElementById('offline-list');
+            offlineContainer.innerHTML = "";
+            data.offline.forEach(dev => {
+                const item = document.createElement('div');
+                item.className = "device-item offline";
+                item.innerHTML = `
+                    <div><strong>${dev.username}</strong> [OFFLINE]</div>
+                    <div style="font-size:0.8rem; color:#888;">Dropped: ${dev.offlineAt} (Ran for ${dev.duration})</div>
+                `;
+                offlineContainer.appendChild(item);
+            });
+        });
+
+        // 6. Handle Payload Upload Submission
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('audioFile', file);
+
+            fetch('/upload-mp3', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(!data.success) alert('Payload sync error.');
+            })
+            .catch(err => console.error('Error uploading:', err));
+        });
+
+        // 7. Refresh sound map choices inside list view container
+        socket.on('sound-list-update', (customSounds) => {
+            const container = document.getElementById('sound-buttons-container');
+            container.innerHTML = `
+                <button class="btn sound-select-btn" data-sound="alarm.mp3">Industrial Alarm</button>
+                <button class="btn sound-select-btn" data-sound="beep.mp3">High-Freq Sine Beep</button>
+                <button class="btn sound-select-btn" data-sound="static.mp3">White Noise Burst</button>
+                <button class="btn sound-select-btn" data-sound="glitch.mp3">System Crash Sound</button>
+            `;
+
+            customSounds.forEach(soundFile => {
+                const btn = document.createElement('button');
+                btn.className = "btn sound-select-btn";
+                btn.style.borderColor = "#00f2ff";
+                btn.setAttribute('data-sound', soundFile);
+                
+                // Show a clean identifier indicator based on the file format type
+                const isVideo = soundFile.match(/\.(mp4|webm|mov|avi)$/i);
+                btn.textContent = `${isVideo ? '🎬 [VIDEO-AUDIO]' : '📁'} ${soundFile}`;
+                container.appendChild(btn);
+            });
+
+            document.querySelectorAll('.sound-select-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedSoundFile = btn.getAttribute('data-sound');
+                    document.getElementById('execute-slider').value = 0;
+                    showScreen('screen-properties');
+                });
+            });
+        });
+
+        // 8. Track Routing Configuration Parameter States
+        document.getElementById('execute-slider').addEventListener('input', (e) => {
+            if (e.target.value == "100") {
+                const vol = parseFloat(document.getElementById('prop-volume').value);
+                const offset = parseInt(document.getElementById('prop-offset').value) || 0;
+                const duration = parseInt(document.getElementById('prop-duration').value) || null;
+
+                socket.emit('send-sound-command', {
+                    targetId: selectedTargetId,
+                    file: selectedSoundFile,
+                    volume: vol,
+                    offset: offset,
+                    duration: duration
+                });
+                showScreen('screen-playing');
+            }
+        });
+
+        // 9. Process Intercept Requests
+        document.getElementById('kill-btn').addEventListener('click', () => {
+            socket.emit('send-stop-command', { targetId: selectedTargetId });
+            showScreen('screen-devices');
+        });
+
+        // --- RUNTIME RECEIVER EVENT LOOPS ---
+        socket.on('execute-sound', (data) => {
+            clearTimeout(audioTimeout);
+            clearTimeout(audioDurationTimeout);
+            if(currentAudioInstance) currentAudioInstance.pause();
+
+            audioTimeout = setTimeout(() => {
+                // Instantiating video files here pulls only the raw audio context stream automatically
+                currentAudioInstance = new Audio(data.file);
+                currentAudioInstance.volume = data.volume;
+                currentAudioInstance.play();
+
+                if (data.duration) {
+                    audioDurationTimeout = setTimeout(() => {
+                        currentAudioInstance.pause();
+                    }, data.duration * 1000);
+                }
+            }, data.offset * 1000);
+        });
+
+        socket.on('halt-sound', () => {
+            clearTimeout(audioTimeout);
+            clearTimeout(audioDurationTimeout);
+            if(currentAudioInstance) {
+                currentAudioInstance.pause();
+                currentAudioInstance.currentTime = 0;
+            }
+        });
+
+        socket.emit('register-device', { username: myUsername, isAdmin: false, battery: batteryPct, charging: isCharging });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audio Broadcast System</title>
     <link rel="stylesheet" href="style.css">
