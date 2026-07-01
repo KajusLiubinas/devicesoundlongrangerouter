@@ -3,6 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DSLR - Device Sound Longrange Router</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <div id="view-landing" class="view active-view">
+        <h1>DEVICE SOUND LONGRANGE ROUTER (DSLR)</h1>
+        <div id="tap-zone">
+            <p>YOUR GENERATED USERNAME:</p>
+            <div id="username-display">Generating...</div>
+            <p style="font-size: 0.8rem; color: #555;">(Tap background zone 5 times to activate list)</p>
+        </div>
+        <div class="controls-group">
+            <label>ADMINISTRATOR ACCESS</label>
+            <input type="range" id="admin-slider" min="0" max="1" value="0">
+            <button id="btn-connect">CONNECT DEVICE</button>
+        </div>
+    </div>
+
+    <div id="view-whois" class="view">
+        <img src="whoisthis.png" alt="Who Is This" class="stretched-img">
+    </div>
+
+    <div id="view-admin-list" class="view">
+        <h2>ACTIVE ONLINE DEVICES</h2>
+        <div class="list-container" id="active-devices-list">
+            </div>
+        
+        <h3 style="color: #00ffff; margin-top: 10px;">HISTORICAL OFFLINE LOGS</h3>
+        <div class="list-container" id="offline-devices-list" style="opacity: 0.6;">
+            </div>
+    </div>
+
+    <div id="view-properties" class="view">
+        <h2 id="props-target-title">CONTROL TARGET</h2>
+        
+        <div class="sound-selection">
+            <label>SELECT AUDIO SOURCE:</label>
+            <select id="sound-selector">
+                <option value="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg">Digital Watch Alarm</option>
+                <option value="https://actions.google.com/sounds/v1/alarms/mechanical_clock_ring.ogg">Old Clock Bell</option>
+                <option value="custom">Custom MP3 URL Source</option>
+            </select>
+            <input type="text" id="custom-mp3-url" placeholder="Paste custom direct .mp3 link here" style="display:none; width:90%; margin-top:5px;">
+        </div>
+
+        <div class="prop-box">
+            <label>VOLUME LEVEL</label>
+            <input type="range" id="prop-volume" min="0" max="100" value="80">
+        </div>
+
+        <div class="prop-box">
+            <label>TIME OFFSET (DELAY IN SECONDS)</label>
+            <input type="number" id="prop-offset" min="0" value="0">
+        </div>
+
+        <div class="prop-box">
+            <label>PLAYBACK DURATION (BLANK = INFINITE)</label>
+            <input type="number" id="prop-duration" min="1" placeholder="Infinite until stopped">
+        </div>
+
+        <div class="execution-zone">
+            <label>SLIDE RIGHT TO EXECUTE AUDIO ROUTING</label>
+            <input type="range" id="execute-slider" min="0" max="100" value="0">
+            <button id="btn-cancel-props" class="btn-danger">BACK TO LIST</button>
+        </div>
+    </div>
+
+    <div id="view-execution" class="view">
+        <h1 style="color: #ff0055; animation: pulse 1s infinite;">TRANSMITTING LIVE</h1>
+        <div id="execution-status-text" style="font-size: 1.5rem; margin: 40px 0;">Routing commands...</div>
+        <button id="btn-stop-audio" class="btn-danger" style="padding: 20px 40px; font-size: 1.5rem;">STOP AUDIO</button>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SOUNDBEAM · TRIBUTE</title>
     <style>
         /* --- RESET & SAFE LAYERS --- */
