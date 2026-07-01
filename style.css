@@ -3,16 +3,19 @@
     margin: 0;
     padding: 0;
     font-family: monospace;
-    outline: none !important; /* Forces total removal of focus rings */
-    border: none !important;  /* Strips all default styling borders */
-    -webkit-appearance: none !important;
-    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;                 /* Eradicates browser focus highlights */
+    border: none !important;                  /* Eradicates default box structures */
+    box-shadow: none !important;              /* Strips out hidden visual shadow footprints */
+    text-shadow: none !important;             /* Strips text element glows */
+    -webkit-appearance: none !important;      /* Overrides native iOS slider and input elements */
+    -webkit-tap-highlight-color: transparent !important; /* Disables mobile touch-flash colors */
 }
 
-/* Explicitly stop inputs from carrying native active focus structures */
-input:focus, button:focus, select:focus, textarea:focus {
+/* Hard block browser auto-focus rings on active element tracking frames */
+input:focus, button:focus, textarea:focus, select:focus {
     outline: none !important;
     box-shadow: none !important;
+    background-image: none !important;
 }
 
 html, body {
@@ -21,7 +24,7 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    position: fixed;
+    position: fixed; /* Eliminates rubber banding frame scrolling on mobile browsers */
 }
 
 .screen {
@@ -32,7 +35,7 @@ html, body {
     width: 100vw;
     height: 100vh;
     padding: 20px;
-    padding-top: calc(20px + env(safe-area-inset-top));
+    padding-top: calc(20px + env(safe-area-inset-top)); /* Safe area management for modern phone notches */
     background-color: #18181a;
     flex-direction: column;
 }
@@ -94,7 +97,7 @@ html, body {
     padding: 14px;
     margin-bottom: 20px;
     border-radius: 24px;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch; /* Forces hardware-accelerated kinetic scroll velocity on iOS */
 }
 
 h3 {
@@ -146,7 +149,7 @@ h3 {
     border-radius: 16px;
 }
 
-/* --- SWIPE TRACK CAPSULE --- */
+/* --- SWIPE TRACK HOUSING --- */
 .unlock-wrapper {
     position: relative;
     width: 100%;
@@ -187,8 +190,9 @@ h3 {
     cursor: pointer;
 }
 
-/* Curved Slider Thumbs with zero shadows/glow outlines */
+/* Flat Curved Slider Thumbs with zero shadows, outlines, or glow artifacts */
 .unlock-slider::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
     width: 70px;
     height: 54px;
     background: #00f2ff;
@@ -202,7 +206,7 @@ h3 {
     border-radius: 27px;
 }
 
-/* Volume Track Bar configuration */
+/* Standard Configuration Properties Slider Control Track */
 .standard-slider {
     width: 100%;
     background: #212124;
@@ -211,6 +215,7 @@ h3 {
 }
 
 .standard-slider::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -218,7 +223,15 @@ h3 {
     cursor: pointer;
 }
 
-/* --- FLAT CURVED BUTTONS --- */
+.standard-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #00f2ff;
+    cursor: pointer;
+}
+
+/* --- FLAT CURVED INTERACTIVE BUTTON SEGMENTS --- */
 .btn {
     width: 100%;
     padding: 16px;
@@ -251,544 +264,9 @@ h3 {
     color: #fff;
     font-size: 1.1rem;
     border-radius: 30px;
-}* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: monospace;
-    outline: none !important;
-    -webkit-appearance: none; /* Crucial strip rule variant for crisp rendering on iOS */
-    -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
-    background-color: #18181a;
-    color: #e2e2e9;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: fixed; /* Bypasses iOS rubber-banding scroll mechanics completely */
-}
-
-.screen {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    padding: 20px;
-    padding-top: calc(20px + env(safe-area-inset-top)); /* Safe structural padding for iPhone dynamic islands */
-    background-color: #18181a;
-    flex-direction: column;
-}
-
-.screen.active {
-    display: flex;
-}
-
-.header {
-    background-color: #212124;
-    color: #00f2ff;
-    padding: 14px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
-    border-radius: 24px;
-}
-
-.content-center {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.cyan-text {
-    color: #00f2ff;
-}
-
-.large-text {
-    font-size: 2.2rem;
-    font-weight: bold;
-    margin: 20px 0;
-}
-
-.user-display {
-    color: #71717a;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
-
-.fullscreen-stretch {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: fill;
-    z-index: 9999;
-}
-
-.scroll-list {
-    flex: 1;
-    overflow-y: auto;
-    background: #121214;
-    padding: 14px;
-    margin-bottom: 20px;
-    border-radius: 24px;
-    -webkit-overflow-scrolling: touch; /* Fast kinetic fluid scroll injection for Safari */
-}
-
-h3 {
-    font-size: 0.8rem;
-    color: #00f2ff;
-    margin-bottom: 10px;
-}
-
-.device-item {
-    background: #1c1c1f;
-    padding: 14px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 16px;
-}
-
-.device-item.offline {
-    background: #161618;
-    color: #71717a;
-}
-
-.control-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-}
-
-.prop-row {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-}
-
-.prop-row label {
-    font-size: 0.75rem;
-    color: #a1a1aa;
-    margin-bottom: 6px;
-}
-
-.prop-row input[type="number"] {
-    background: #1c1c1f;
-    color: #fff;
-    padding: 14px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 16px;
-    -webkit-appearance: none;
-}
-
-/* --- FLAT SWIPE CAPSULE DEFINITION --- */
-.unlock-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 340px;
-    height: 54px;
-    background: #212124;
-    border-radius: 27px;
-    overflow: hidden;
-    margin-top: 30px;
-    display: flex;
-    align-items: center;
-}
-
-.execute-wrapper {
-    max-width: 100%;
-    margin-top: 15px;
-}
-
-.unlock-text {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #a1a1aa;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.unlock-slider {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent !important;
-    border: none !important;
-    -webkit-appearance: none;
-    z-index: 2;
-    cursor: pointer;
-}
-
-/* Apple iOS WebKit thumb styling rules overrides */
-.unlock-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 70px;
-    height: 54px;
-    background: #00f2ff;
-    border-radius: 27px;
-    border: none;
-}
-
-.unlock-slider::-moz-range-thumb {
-    width: 70px;
-    height: 54px;
-    background: #00f2ff;
-    border-radius: 27px;
-    border: none;
-}
-
-/* Volume Track Configurations */
-.standard-slider {
-    width: 100%;
-    background: #212124;
-    -webkit-appearance: none;
-    border-radius: 12px;
-    height: 12px;
-}
-
-.standard-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #00f2ff;
-    cursor: pointer;
-}
-
-/* --- INTERACTIVE FLAT BUTTON HOOKS --- */
-.btn {
-    width: 100%;
-    padding: 16px;
-    background: #212124;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    margin-bottom: 10px;
-    border: none;
-    border-radius: 24px;
-    -webkit-appearance: none;
-}
-
-.upload-btn {
-    background: #142c30;
-    color: #00f2ff;
-}
-
-.sound-select-btn {
-    background: #1a2426;
-    text-align: left;
-    color: #00f2ff;
-}
-
-.back-btn {
-    color: #ef4444;
-    background: #2a1919;
-}
-
-.emergency-btn {
-    background: #7f1d1d;
-    color: #fff;
-    font-size: 1.1rem;
-    border-radius: 30px;
-}* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: monospace;
-}
-
-html, body {
-    background-color: #18181a;
-    color: #e2e2e9;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.screen {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    padding: 18px;
-    background-color: #18181a;
-    flex-direction: column;
-}
-
-.screen.active {
-    display: flex;
-}
-
-.header {
-    background-color: #212124;
-    border: 1px solid #00f2ff;
-    color: #00f2ff;
-    padding: 12px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
-}
-
-.content-center {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.cyan-text {
-    color: #00f2ff;
-}
-
-.large-text {
-    font-size: 2.2rem;
-    font-weight: bold;
-    text-shadow: 0 0 12px rgba(0, 242, 255, 0.4);
-    margin: 20px 0;
-}
-
-.user-display {
-    color: #71717a;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
-
-.fullscreen-stretch {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: fill;
-    z-index: 9999;
-}
-
-.scroll-list {
-    flex: 1;
-    overflow-y: auto;
-    border: 1px solid #27272a;
-    background: #121214;
-    padding: 12px;
-    margin-bottom: 20px;
-}
-
-h3 {
-    font-size: 0.8rem;
-    color: #00f2ff;
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-}
-
-.device-item {
-    background: #1c1c1f;
-    border-left: 3px solid #00f2ff;
-    padding: 12px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 2px;
-}
-
-.device-item.offline {
-    border-left-color: #3f3f46;
-    color: #71717a;
-}
-
-.control-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-}
-
-.prop-row {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-}
-
-.prop-row label {
-    font-size: 0.75rem;
-    color: #a1a1aa;
-    margin-bottom: 6px;
-}
-
-.prop-row input[type="number"] {
-    background: #1c1c1f;
-    border: 1px solid #27272a;
-    color: #fff;
-    padding: 12px;
-    font-size: 1rem;
-    outline: none;
-}
-
-.prop-row input[type="number"]:focus {
-    border-color: #00f2ff;
-}
-
-/* --- SWIPE TO UNLOCK COMPONENT UI --- */
-.unlock-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 340px;
-    height: 50px;
-    background: #212124;
-    border: 1px solid #27272a;
-    border-radius: 25px; /* Clean track capsule */
-    overflow: hidden;
-    margin-top: 30px;
-    display: flex;
-    align-items: center;
-}
-
-.execute-wrapper {
-    max-width: 100%;
-    margin-top: 15px;
-    border-color: rgba(0, 242, 255, 0.2);
-}
-
-.unlock-text {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #a1a1aa;
-    pointer-events: none; /* Allows thumb selection straight through text layer */
-    z-index: 1;
-    letter-spacing: 0.5px;
-    animation: textShimmer 2s infinite linear;
-}
-
-.unlock-slider {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent !important; /* Empties track appearance */
-    border: none !important;
-    outline: none;
-    -webkit-appearance: none;
-    z-index: 2;
-    cursor: pointer;
-}
-
-/* Unlock Capsule Thumb Styling */
-.unlock-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 60px;
-    height: 44px;
-    background: #00f2ff;
-    border-radius: 22px;
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
-    transition: transform 0.1s ease;
-}
-
-.unlock-slider::-moz-range-thumb {
-    width: 60px;
-    height: 44px;
-    background: #00f2ff;
-    border-radius: 22px;
-    border: none;
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
-}
-
-/* Regular Audio Volume Slider Configuration */
-.standard-slider {
-    width: 100%;
-    height: 8px;
-    background: #212124;
-    outline: none;
-    -webkit-appearance: none;
-    border-radius: 4px;
-}
-
-.standard-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #00f2ff;
-    cursor: pointer;
-    box-shadow: 0 0 6px rgba(0, 242, 255, 0.4);
-}
-
-/* Action Control Triggers */
-.btn {
-    width: 100%;
-    padding: 14px;
-    background: #212124;
-    color: #fff;
-    border: 1px solid #27272a;
-    font-weight: bold;
-    cursor: pointer;
-    margin-bottom: 8px;
-    outline: none;
-}
-
-.sound-select-btn {
-    border-color: #00f2ff;
-    text-align: left;
-    color: #00f2ff;
-}
-
-.back-btn {
-    color: #ef4444;
-    border-color: #451a1a;
-    background: rgba(239, 68, 68, 0.02);
-}
-
-.emergency-btn {
-    background: #991b1b;
-    border-color: #ef4444;
-    color: #fff;
-    font-size: 1.1rem;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
-}
-
-.pulse { animation: pulseAnim 1.5s infinite; }
-.warning-pulse { animation: warningPulse 1s infinite alternate; }
-
-@keyframes textShimmer {
-    0% { opacity: 0.4; }
-    50% { opacity: 1; color: #fff; }
-    100% { opacity: 0.4; }
-}
-
-@keyframes pulseAnim {
-    0% { opacity: 0.5; }
-    50% { opacity: 1; }
-    100% { opacity: 0.5; }
-}
-
-@keyframes warningPulse {
-    from { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
-    to { border-color: #00f2ff; color: #00f2ff; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+/* Strip any animations inducing background/border glow filters */
+.pulse, .warning-pulse, .glow-effect {
+    animation: none !important;
 }
