@@ -3,6 +3,259 @@
     margin: 0;
     padding: 0;
     font-family: monospace;
+    outline: none !important; /* Forces total removal of focus rings */
+    border: none !important;  /* Strips all default styling borders */
+    -webkit-appearance: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Explicitly stop inputs from carrying native active focus structures */
+input:focus, button:focus, select:focus, textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+html, body {
+    background-color: #18181a;
+    color: #e2e2e9;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+}
+
+.screen {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: 20px;
+    padding-top: calc(20px + env(safe-area-inset-top));
+    background-color: #18181a;
+    flex-direction: column;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.header {
+    background-color: #212124;
+    color: #00f2ff;
+    padding: 14px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    border-radius: 24px;
+}
+
+.content-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.cyan-text {
+    color: #00f2ff;
+}
+
+.large-text {
+    font-size: 2.2rem;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.user-display {
+    color: #71717a;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.fullscreen-stretch {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: fill;
+    z-index: 9999;
+}
+
+.scroll-list {
+    flex: 1;
+    overflow-y: auto;
+    background: #121214;
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 24px;
+    -webkit-overflow-scrolling: touch;
+}
+
+h3 {
+    font-size: 0.8rem;
+    color: #00f2ff;
+    margin-bottom: 10px;
+}
+
+.device-item {
+    background: #1c1c1f;
+    padding: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px;
+}
+
+.device-item.offline {
+    background: #161618;
+    color: #71717a;
+}
+
+.control-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.prop-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.prop-row label {
+    font-size: 0.75rem;
+    color: #a1a1aa;
+    margin-bottom: 6px;
+}
+
+.prop-row input[type="number"] {
+    background: #1c1c1f;
+    color: #fff;
+    padding: 14px;
+    font-size: 1rem;
+    border-radius: 16px;
+}
+
+/* --- SWIPE TRACK CAPSULE --- */
+.unlock-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    height: 54px;
+    background: #212124;
+    border-radius: 27px;
+    overflow: hidden;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+}
+
+.execute-wrapper {
+    max-width: 100%;
+    margin-top: 15px;
+}
+
+.unlock-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #a1a1aa;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.unlock-slider {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    z-index: 2;
+    cursor: pointer;
+}
+
+/* Curved Slider Thumbs with zero shadows/glow outlines */
+.unlock-slider::-webkit-slider-thumb {
+    width: 70px;
+    height: 54px;
+    background: #00f2ff;
+    border-radius: 27px;
+}
+
+.unlock-slider::-moz-range-thumb {
+    width: 70px;
+    height: 54px;
+    background: #00f2ff;
+    border-radius: 27px;
+}
+
+/* Volume Track Bar configuration */
+.standard-slider {
+    width: 100%;
+    background: #212124;
+    border-radius: 12px;
+    height: 12px;
+}
+
+.standard-slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #00f2ff;
+    cursor: pointer;
+}
+
+/* --- FLAT CURVED BUTTONS --- */
+.btn {
+    width: 100%;
+    padding: 16px;
+    background: #212124;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+    border-radius: 24px;
+}
+
+.upload-btn {
+    background: #142c30;
+    color: #00f2ff;
+}
+
+.sound-select-btn {
+    background: #1a2426;
+    text-align: left;
+    color: #00f2ff;
+}
+
+.back-btn {
+    color: #ef4444;
+    background: #2a1919;
+}
+
+.emergency-btn {
+    background: #7f1d1d;
+    color: #fff;
+    font-size: 1.1rem;
+    border-radius: 30px;
+}* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: monospace;
     outline: none !important;
     -webkit-appearance: none; /* Crucial strip rule variant for crisp rendering on iOS */
     -webkit-tap-highlight-color: transparent;
