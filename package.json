@@ -1,7 +1,7 @@
 {
-  "name": "dslr-router",
+  "name": "audio-router-server",
   "version": "1.0.0",
-  "description": "Device Sound Longrange Router",
+  "description": "Audio streaming server on Render",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,5 +9,8 @@
   "dependencies": {
     "express": "^4.19.2",
     "socket.io": "^4.7.5"
-  }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
