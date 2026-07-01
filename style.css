@@ -6,8 +6,8 @@
 }
 
 html, body {
-    background-color: #1c1c1f;
-    color: #e0e0e6;
+    background-color: #18181a;
+    color: #e2e2e9;
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -20,8 +20,8 @@ html, body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    padding: 15px;
-    background-color: #1c1c1f;
+    padding: 18px;
+    background-color: #18181a;
     flex-direction: column;
 }
 
@@ -30,15 +30,16 @@ html, body {
 }
 
 .header {
-    background-color: #26262b;
+    background-color: #212124;
     border: 1px solid #00f2ff;
     color: #00f2ff;
-    padding: 10px;
+    padding: 12px;
     text-align: center;
     font-weight: bold;
-    font-size: 0.95rem;
-    margin-bottom: 15px;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
     letter-spacing: 1px;
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
 }
 
 .content-center {
@@ -54,15 +55,16 @@ html, body {
 }
 
 .large-text {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: bold;
-    text-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
-    margin: 15px 0;
+    text-shadow: 0 0 12px rgba(0, 242, 255, 0.4);
+    margin: 20px 0;
 }
 
 .user-display {
-    color: #8a8a93;
-    font-size: 0.85rem;
+    color: #71717a;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
 }
 
 .fullscreen-stretch {
@@ -78,32 +80,34 @@ html, body {
 .scroll-list {
     flex: 1;
     overflow-y: auto;
-    border: 1px solid #2d2d35;
-    background: #161619;
-    padding: 10px;
-    margin-bottom: 15px;
+    border: 1px solid #27272a;
+    background: #121214;
+    padding: 12px;
+    margin-bottom: 20px;
 }
 
 h3 {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #00f2ff;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
 }
 
 .device-item {
-    background: #222226;
+    background: #1c1c1f;
     border-left: 3px solid #00f2ff;
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 8px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-radius: 2px;
 }
 
 .device-item.offline {
-    border-left-color: #555;
-    color: #888;
+    border-left-color: #3f3f46;
+    color: #71717a;
 }
 
 .control-container {
@@ -116,63 +120,127 @@ h3 {
 .prop-row {
     display: flex;
     flex-direction: column;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .prop-row label {
     font-size: 0.75rem;
-    color: #8a8a93;
-    margin-bottom: 4px;
+    color: #a1a1aa;
+    margin-bottom: 6px;
 }
 
 .prop-row input[type="number"] {
-    background: #222226;
-    border: 1px solid #3d3d45;
+    background: #1c1c1f;
+    border: 1px solid #27272a;
     color: #fff;
-    padding: 10px;
+    padding: 12px;
     font-size: 1rem;
+    outline: none;
 }
 
-input[type="range"] {
+.prop-row input[type="number"]:focus {
+    border-color: #00f2ff;
+}
+
+/* --- SWIPE TO UNLOCK COMPONENT UI --- */
+.unlock-wrapper {
+    position: relative;
     width: 100%;
-    height: 35px;
-    background: #26262b;
-    border: 1px solid #3d3d45;
+    max-width: 340px;
+    height: 50px;
+    background: #212124;
+    border: 1px solid #27272a;
+    border-radius: 25px; /* Clean track capsule */
+    overflow: hidden;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+}
+
+.execute-wrapper {
+    max-width: 100%;
+    margin-top: 15px;
+    border-color: rgba(0, 242, 255, 0.2);
+}
+
+.unlock-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #a1a1aa;
+    pointer-events: none; /* Allows thumb selection straight through text layer */
+    z-index: 1;
+    letter-spacing: 0.5px;
+    animation: textShimmer 2s infinite linear;
+}
+
+.unlock-slider {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important; /* Empties track appearance */
+    border: none !important;
     outline: none;
     -webkit-appearance: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 40px;
-    height: 33px;
-    background: #00f2ff;
+    z-index: 2;
     cursor: pointer;
 }
 
-.slider-box {
+/* Unlock Capsule Thumb Styling */
+.unlock-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 60px;
+    height: 44px;
+    background: #00f2ff;
+    border-radius: 22px;
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+    transition: transform 0.1s ease;
+}
+
+.unlock-slider::-moz-range-thumb {
+    width: 60px;
+    height: 44px;
+    background: #00f2ff;
+    border-radius: 22px;
+    border: none;
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+/* Regular Audio Volume Slider Configuration */
+.standard-slider {
     width: 100%;
-    max-width: 320px;
-    text-align: center;
-    margin-top: 30px;
+    height: 8px;
+    background: #212124;
+    outline: none;
+    -webkit-appearance: none;
+    border-radius: 4px;
 }
 
-.slider-box label {
-    display: block;
-    font-size: 0.75rem;
-    color: #8a8a93;
-    margin-bottom: 8px;
+.standard-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #00f2ff;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(0, 242, 255, 0.4);
 }
 
+/* Action Control Triggers */
 .btn {
     width: 100%;
     padding: 14px;
-    background: #26262b;
+    background: #212124;
     color: #fff;
-    border: 1px solid #3d3d45;
+    border: 1px solid #27272a;
     font-weight: bold;
     cursor: pointer;
     margin-bottom: 8px;
+    outline: none;
 }
 
 .sound-select-btn {
@@ -182,19 +250,27 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .back-btn {
-    color: #ff4444;
-    border-color: #552222;
+    color: #ef4444;
+    border-color: #451a1a;
+    background: rgba(239, 68, 68, 0.02);
 }
 
 .emergency-btn {
-    background: #cc2222;
-    border-color: #ff4444;
+    background: #991b1b;
+    border-color: #ef4444;
     color: #fff;
     font-size: 1.1rem;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
 }
 
 .pulse { animation: pulseAnim 1.5s infinite; }
 .warning-pulse { animation: warningPulse 1s infinite alternate; }
+
+@keyframes textShimmer {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; color: #fff; }
+    100% { opacity: 0.4; }
+}
 
 @keyframes pulseAnim {
     0% { opacity: 0.5; }
@@ -203,6 +279,6 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @keyframes warningPulse {
-    from { border-color: #ff4444; color: #ff4444; }
-    to { border-color: #00f2ff; color: #00f2ff; }
+    from { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+    to { border-color: #00f2ff; color: #00f2ff; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
 }
