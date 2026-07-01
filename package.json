@@ -1,12 +1,13 @@
 {
-  "name": "soundbeam-p2p",
+  "name": "dslr-router",
   "version": "1.0.0",
-  "description": "P2P audio streaming",
-  "main": "index.html",
+  "description": "Device Sound Longrange Router",
+  "main": "server.js",
   "scripts": {
-    "start": "npx http-server . -p 8080"
+    "start": "node server.js"
   },
-  "devDependencies": {
-    "http-server": "^14.1.1"
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   }
 }
